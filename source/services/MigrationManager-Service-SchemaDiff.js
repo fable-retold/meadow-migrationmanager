@@ -265,8 +265,13 @@ class MigrationManagerServiceSchemaDiff extends libFableServiceBase
 				let tmpChanges = {};
 				let tmpHasColumnChanges = false;
 
-				// Compare DataType
-				if (tmpSourceCol.DataType !== tmpTargetCol.DataType)
+				// Compare DataType — treat ForeignKey and Numeric as equivalent
+				// because they map to the same native type in all engines (e.g.
+				// INT NOT NULL DEFAULT 0 in MSSQL).  Introspection may return
+				// Numeric for columns that the schema defines as ForeignKey when
+				// the database lacks explicit FK constraints.
+				if (tmpSourceCol.DataType !== tmpTargetCol.DataType
+					&& !this._areEquivalentDataTypes(tmpSourceCol.DataType, tmpTargetCol.DataType))
 				{
 					tmpChanges.DataType = { From: tmpSourceCol.DataType, To: tmpTargetCol.DataType };
 					tmpHasColumnChanges = true;
@@ -384,6 +389,30 @@ class MigrationManagerServiceSchemaDiff extends libFableServiceBase
 		}
 
 		return tmpTableDiff;
+	}
+
+	/**
+	 * Check whether two Meadow DataTypes are functionally equivalent.
+	 *
+	 * ForeignKey and Numeric map to the same native type in all engines
+	 * (e.g. INT NOT NULL DEFAULT 0 in MSSQL).  Database introspection may
+	 * return Numeric for columns that the schema defines as ForeignKey
+	 * when the database lacks explicit FK constraints.
+	 *
+	 * @param {string} pTypeA - First DataType
+	 * @param {string} pTypeB - Second DataType
+	 *
+	 * @return {boolean} True if the types are equivalent
+	 */
+	_areEquivalentDataTypes(pTypeA, pTypeB)
+	{
+		// ForeignKey and Numeric are equivalent
+		if ((pTypeA === 'ForeignKey' && pTypeB === 'Numeric')
+			|| (pTypeA === 'Numeric' && pTypeB === 'ForeignKey'))
+		{
+			return true;
+		}
+		return false;
 	}
 
 	/**
