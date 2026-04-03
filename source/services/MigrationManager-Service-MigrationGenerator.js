@@ -174,6 +174,130 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 	}
 
 	/**
+	 * Extract the DEFAULT value from a native SQL type string.
+	 *
+	 * @param {string} pNativeType - The full native type string (may contain DEFAULT)
+	 *
+	 * @return {string|null} The default value expression, or null if none
+	 */
+	_extractDefault(pNativeType)
+	{
+		let tmpDefaultIndex = pNativeType.indexOf(' DEFAULT ');
+		if (tmpDefaultIndex > -1)
+		{
+			return pNativeType.substring(tmpDefaultIndex + 9);
+		}
+		return null;
+	}
+
+	/**
+	 * Generate a self-contained T-SQL batch for ALTER COLUMN that safely drops
+	 * dependent objects (default constraints, check constraints, and indexes),
+	 * alters the column, then recreates them.
+	 *
+	 * MSSQL raises "one or more objects access this column" when ALTER COLUMN
+	 * is attempted on a column with dependent constraints or indexes.  This
+	 * batch handles that by querying sys catalog views for dependents, dropping
+	 * them, performing the ALTER, then recreating them.
+	 *
+	 * @param {string} pRawTableName - Unquoted table name
+	 * @param {string} pRawColName   - Unquoted column name
+	 * @param {string} pNativeType   - Full native type string (may include DEFAULT)
+	 *
+	 * @return {string} A complete T-SQL batch
+	 */
+	_generateMSSQLAlterColumnBatch(pRawTableName, pRawColName, pNativeType)
+	{
+		let tmpAlterType = this._stripDefault(pNativeType);
+		let tmpDefaultValue = this._extractDefault(pNativeType);
+
+		// Use a sanitized suffix for temp table and variable names to avoid collisions
+		let tmpSuffix = pRawTableName + '_' + pRawColName;
+
+		let tmpBatch = '';
+
+		// -- Step 1: Drop default constraints --
+		tmpBatch += 'DECLARE @dc_' + tmpSuffix + ' NVARCHAR(MAX) = N\'\';\n';
+		tmpBatch += 'SELECT @dc_' + tmpSuffix + ' = @dc_' + tmpSuffix + ' + N\'ALTER TABLE ' + this._quoteIdentifier(pRawTableName, 'MSSQL') + ' DROP CONSTRAINT \' + QUOTENAME(dc.name) + N\'; \'\n';
+		tmpBatch += 'FROM sys.default_constraints dc\n';
+		tmpBatch += 'INNER JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id\n';
+		tmpBatch += 'WHERE dc.parent_object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND c.name = N\'' + pRawColName + '\';\n';
+		tmpBatch += 'IF LEN(@dc_' + tmpSuffix + ') > 0 EXEC sp_executesql @dc_' + tmpSuffix + ';\n\n';
+
+		// -- Step 2: Drop check constraints --
+		tmpBatch += 'DECLARE @cc_' + tmpSuffix + ' NVARCHAR(MAX) = N\'\';\n';
+		tmpBatch += 'SELECT @cc_' + tmpSuffix + ' = @cc_' + tmpSuffix + ' + N\'ALTER TABLE ' + this._quoteIdentifier(pRawTableName, 'MSSQL') + ' DROP CONSTRAINT \' + QUOTENAME(cc.name) + N\'; \'\n';
+		tmpBatch += 'FROM sys.check_constraints cc\n';
+		tmpBatch += 'INNER JOIN sys.columns c ON cc.parent_object_id = c.object_id AND cc.parent_column_id = c.column_id\n';
+		tmpBatch += 'WHERE cc.parent_object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND c.name = N\'' + pRawColName + '\';\n';
+		tmpBatch += 'IF LEN(@cc_' + tmpSuffix + ') > 0 EXEC sp_executesql @cc_' + tmpSuffix + ';\n\n';
+
+		// -- Step 3: Save index definitions and drop indexes --
+		tmpBatch += 'IF OBJECT_ID(\'tempdb..#_ix_' + tmpSuffix + '\') IS NOT NULL DROP TABLE #_ix_' + tmpSuffix + ';\n';
+		tmpBatch += 'CREATE TABLE #_ix_' + tmpSuffix + ' (IxName NVARCHAR(256), IsUnique BIT, KeyCols NVARCHAR(MAX), InclCols NVARCHAR(MAX));\n\n';
+
+		tmpBatch += 'DECLARE @ixn_' + tmpSuffix + ' NVARCHAR(256), @ixu_' + tmpSuffix + ' BIT;\n';
+		tmpBatch += 'DECLARE @ixk_' + tmpSuffix + ' NVARCHAR(MAX), @ixi_' + tmpSuffix + ' NVARCHAR(MAX);\n';
+		tmpBatch += 'DECLARE _ix_cur_' + tmpSuffix + ' CURSOR LOCAL FAST_FORWARD FOR\n';
+		tmpBatch += '    SELECT DISTINCT i.name, i.is_unique\n';
+		tmpBatch += '    FROM sys.indexes i\n';
+		tmpBatch += '    INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id\n';
+		tmpBatch += '    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id\n';
+		tmpBatch += '    WHERE i.object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND c.name = N\'' + pRawColName + '\'\n';
+		tmpBatch += '      AND i.is_primary_key = 0 AND i.type IN (1, 2);\n';
+		tmpBatch += 'OPEN _ix_cur_' + tmpSuffix + ';\n';
+		tmpBatch += 'FETCH NEXT FROM _ix_cur_' + tmpSuffix + ' INTO @ixn_' + tmpSuffix + ', @ixu_' + tmpSuffix + ';\n';
+		tmpBatch += 'WHILE @@FETCH_STATUS = 0\n';
+		tmpBatch += 'BEGIN\n';
+		tmpBatch += '    SET @ixk_' + tmpSuffix + ' = N\'\'; SET @ixi_' + tmpSuffix + ' = N\'\';\n';
+		tmpBatch += '    SELECT @ixk_' + tmpSuffix + ' = @ixk_' + tmpSuffix + ' + CASE WHEN LEN(@ixk_' + tmpSuffix + ') > 0 THEN N\', \' ELSE N\'\' END + QUOTENAME(c.name)\n';
+		tmpBatch += '    FROM sys.index_columns ic\n';
+		tmpBatch += '    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id\n';
+		tmpBatch += '    WHERE ic.object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND ic.index_id = (\n';
+		tmpBatch += '        SELECT index_id FROM sys.indexes WHERE object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND name = @ixn_' + tmpSuffix + '\n';
+		tmpBatch += '    ) AND ic.is_included_column = 0 ORDER BY ic.key_ordinal;\n';
+		tmpBatch += '    SELECT @ixi_' + tmpSuffix + ' = @ixi_' + tmpSuffix + ' + CASE WHEN LEN(@ixi_' + tmpSuffix + ') > 0 THEN N\', \' ELSE N\'\' END + QUOTENAME(c.name)\n';
+		tmpBatch += '    FROM sys.index_columns ic\n';
+		tmpBatch += '    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id\n';
+		tmpBatch += '    WHERE ic.object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND ic.index_id = (\n';
+		tmpBatch += '        SELECT index_id FROM sys.indexes WHERE object_id = OBJECT_ID(N\'' + pRawTableName + '\') AND name = @ixn_' + tmpSuffix + '\n';
+		tmpBatch += '    ) AND ic.is_included_column = 1 ORDER BY ic.index_column_id;\n';
+		tmpBatch += '    INSERT INTO #_ix_' + tmpSuffix + ' (IxName, IsUnique, KeyCols, InclCols)\n';
+		tmpBatch += '    VALUES (@ixn_' + tmpSuffix + ', @ixu_' + tmpSuffix + ', @ixk_' + tmpSuffix + ', @ixi_' + tmpSuffix + ');\n';
+		tmpBatch += '    EXEC(N\'DROP INDEX \' + QUOTENAME(@ixn_' + tmpSuffix + ') + N\' ON ' + this._quoteIdentifier(pRawTableName, 'MSSQL') + '\');\n';
+		tmpBatch += '    FETCH NEXT FROM _ix_cur_' + tmpSuffix + ' INTO @ixn_' + tmpSuffix + ', @ixu_' + tmpSuffix + ';\n';
+		tmpBatch += 'END;\n';
+		tmpBatch += 'CLOSE _ix_cur_' + tmpSuffix + '; DEALLOCATE _ix_cur_' + tmpSuffix + ';\n\n';
+
+		// -- Step 4: ALTER COLUMN --
+		tmpBatch += 'ALTER TABLE ' + this._quoteIdentifier(pRawTableName, 'MSSQL') + ' ALTER COLUMN ' + this._quoteIdentifier(pRawColName, 'MSSQL') + ' ' + tmpAlterType + ';\n\n';
+
+		// -- Step 5: Recreate indexes --
+		tmpBatch += 'DECLARE _ix_re_' + tmpSuffix + ' CURSOR LOCAL FAST_FORWARD FOR\n';
+		tmpBatch += '    SELECT IxName, IsUnique, KeyCols, InclCols FROM #_ix_' + tmpSuffix + ';\n';
+		tmpBatch += 'OPEN _ix_re_' + tmpSuffix + ';\n';
+		tmpBatch += 'FETCH NEXT FROM _ix_re_' + tmpSuffix + ' INTO @ixn_' + tmpSuffix + ', @ixu_' + tmpSuffix + ', @ixk_' + tmpSuffix + ', @ixi_' + tmpSuffix + ';\n';
+		tmpBatch += 'WHILE @@FETCH_STATUS = 0\n';
+		tmpBatch += 'BEGIN\n';
+		tmpBatch += '    DECLARE @ixsql_' + tmpSuffix + ' NVARCHAR(MAX) = CASE WHEN @ixu_' + tmpSuffix + ' = 1 THEN N\'CREATE UNIQUE\' ELSE N\'CREATE\' END\n';
+		tmpBatch += '        + N\' INDEX \' + QUOTENAME(@ixn_' + tmpSuffix + ') + N\' ON ' + this._quoteIdentifier(pRawTableName, 'MSSQL') + ' (\' + @ixk_' + tmpSuffix + ' + N\')\'\n';
+		tmpBatch += '        + CASE WHEN LEN(@ixi_' + tmpSuffix + ') > 0 THEN N\' INCLUDE (\' + @ixi_' + tmpSuffix + ' + N\')\' ELSE N\'\' END;\n';
+		tmpBatch += '    EXEC sp_executesql @ixsql_' + tmpSuffix + ';\n';
+		tmpBatch += '    FETCH NEXT FROM _ix_re_' + tmpSuffix + ' INTO @ixn_' + tmpSuffix + ', @ixu_' + tmpSuffix + ', @ixk_' + tmpSuffix + ', @ixi_' + tmpSuffix + ';\n';
+		tmpBatch += 'END;\n';
+		tmpBatch += 'CLOSE _ix_re_' + tmpSuffix + '; DEALLOCATE _ix_re_' + tmpSuffix + ';\n';
+		tmpBatch += 'DROP TABLE #_ix_' + tmpSuffix + ';\n\n';
+
+		// -- Step 6: Re-add default constraint if applicable --
+		if (tmpDefaultValue)
+		{
+			tmpBatch += 'ALTER TABLE ' + this._quoteIdentifier(pRawTableName, 'MSSQL') + ' ADD DEFAULT ' + tmpDefaultValue + ' FOR ' + this._quoteIdentifier(pRawColName, 'MSSQL') + ';\n';
+		}
+
+		return tmpBatch;
+	}
+
+	/**
 	 * Map a Meadow DataType to an MSSQL native type.
 	 *
 	 * @param {string} pDataType - The Meadow DataType
@@ -347,8 +471,11 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 							tmpStatements.push('ALTER TABLE ' + tmpTableName + ' ALTER COLUMN ' + tmpColName + ' TYPE ' + tmpNativeType);
 							break;
 						case 'MSSQL':
-							// MSSQL does not allow DEFAULT in ALTER COLUMN — strip it
-							tmpStatements.push('ALTER TABLE ' + tmpTableName + ' ALTER COLUMN ' + tmpColName + ' ' + this._stripDefault(tmpNativeType));
+							// MSSQL does not allow DEFAULT in ALTER COLUMN and raises
+							// "one or more objects access this column" when dependent
+							// constraints or indexes exist.  Generate a self-contained
+							// batch that drops dependents, alters, and recreates them.
+							tmpStatements.push(this._generateMSSQLAlterColumnBatch(tmpTableMod.TableName, tmpColMod.Column, tmpNativeType));
 							break;
 						case 'SQLite':
 							tmpStatements.push('-- SQLite does not support ALTER COLUMN; manual migration required for column ' + tmpColMod.Column + ' in table ' + tmpTableMod.TableName);

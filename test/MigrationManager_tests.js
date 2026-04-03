@@ -936,17 +936,23 @@ suite
 						let tmpStatements = tmpMigGen.generateMigrationStatements(tmpDiff, 'MSSQL');
 						libAssert.strictEqual(tmpStatements.length, 2);
 
-						// BuyUSA: type change — should ALTER COLUMN without DEFAULT
+						// BuyUSA: type change — batch should ALTER COLUMN, drop/re-add constraints
 						libAssert.ok(tmpStatements[0].indexOf('ALTER COLUMN') >= 0, 'Should use ALTER COLUMN');
 						libAssert.ok(tmpStatements[0].indexOf('[BuyUSA]') >= 0, 'Should reference BuyUSA');
 						libAssert.ok(tmpStatements[0].indexOf('BIT NOT NULL') >= 0, 'Boolean should map to BIT NOT NULL');
-						libAssert.ok(tmpStatements[0].indexOf('DEFAULT') < 0, 'MSSQL ALTER COLUMN must not contain DEFAULT');
+						// The ALTER COLUMN line itself must not have DEFAULT; the re-add DEFAULT is a separate statement at the end
+						libAssert.ok(tmpStatements[0].indexOf('ALTER COLUMN [BuyUSA] BIT NOT NULL;') >= 0, 'ALTER COLUMN line should not contain DEFAULT');
+						// But the batch should re-add the default constraint afterward
+						libAssert.ok(tmpStatements[0].indexOf('ADD DEFAULT 0 FOR [BuyUSA]') >= 0, 'Should re-add default constraint for Boolean');
+						// Batch should handle dependent objects
+						libAssert.ok(tmpStatements[0].indexOf('sys.default_constraints') >= 0, 'Should drop default constraints');
+						libAssert.ok(tmpStatements[0].indexOf('sys.indexes') >= 0, 'Should handle indexes');
 
-						// ExternalSyncGUID: size-only change — should still generate ALTER COLUMN
+						// ExternalSyncGUID: size-only change — batch should handle dependents
 						libAssert.ok(tmpStatements[1].indexOf('ALTER COLUMN') >= 0, 'Should use ALTER COLUMN for size change');
 						libAssert.ok(tmpStatements[1].indexOf('[ExternalSyncGUID]') >= 0, 'Should reference ExternalSyncGUID');
 						libAssert.ok(tmpStatements[1].indexOf('NVARCHAR(64)') >= 0, 'Should use new size');
-						libAssert.ok(tmpStatements[1].indexOf('DEFAULT') < 0, 'MSSQL ALTER COLUMN must not contain DEFAULT');
+						libAssert.ok(tmpStatements[1].indexOf('ADD DEFAULT \'\' FOR [ExternalSyncGUID]') >= 0, 'Should re-add default for String');
 					}
 				);
 
@@ -1026,12 +1032,15 @@ suite
 						libAssert.ok(tmpMySQL[0].indexOf('MODIFY COLUMN') >= 0, 'MySQL should use MODIFY COLUMN');
 						libAssert.ok(tmpMySQL[0].indexOf('512') >= 0, 'Should use new size');
 
-						// MSSQL: should generate ALTER COLUMN without DEFAULT
+						// MSSQL: should generate ALTER COLUMN batch that handles dependents
 						let tmpMSSQL = tmpMigGen.generateMigrationStatements(tmpDiff, 'MSSQL');
-						libAssert.strictEqual(tmpMSSQL.length, 1, 'Should generate one statement');
+						libAssert.strictEqual(tmpMSSQL.length, 1, 'Should generate one batch');
 						libAssert.ok(tmpMSSQL[0].indexOf('ALTER COLUMN') >= 0, 'MSSQL should use ALTER COLUMN');
 						libAssert.ok(tmpMSSQL[0].indexOf('NVARCHAR(512)') >= 0, 'Should use new size');
-						libAssert.ok(tmpMSSQL[0].indexOf('DEFAULT') < 0, 'MSSQL ALTER COLUMN must not contain DEFAULT');
+						// The ALTER COLUMN itself must not have DEFAULT; re-add is separate
+						libAssert.ok(tmpMSSQL[0].indexOf('ALTER COLUMN [Title] NVARCHAR(512) NOT NULL;') >= 0, 'ALTER COLUMN line should not contain DEFAULT');
+						libAssert.ok(tmpMSSQL[0].indexOf('sys.default_constraints') >= 0, 'Should handle default constraints');
+						libAssert.ok(tmpMSSQL[0].indexOf('sys.indexes') >= 0, 'Should handle indexes');
 
 						// PostgreSQL: should generate ALTER COLUMN TYPE with new size
 						let tmpPG = tmpMigGen.generateMigrationStatements(tmpDiff, 'PostgreSQL');
