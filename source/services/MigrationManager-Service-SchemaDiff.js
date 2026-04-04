@@ -277,10 +277,12 @@ class MigrationManagerServiceSchemaDiff extends libFableServiceBase
 					tmpHasColumnChanges = true;
 				}
 
-				// Compare Size
-				let tmpSourceSize = tmpSourceCol.hasOwnProperty('Size') ? tmpSourceCol.Size : undefined;
-				let tmpTargetSize = tmpTargetCol.hasOwnProperty('Size') ? tmpTargetCol.Size : undefined;
-				if (tmpSourceSize !== tmpTargetSize)
+				// Compare Size — treat empty string, undefined, and absent as equivalent
+				// (all mean "no specific size").  Introspection often returns '' while
+				// the target schema may omit the property entirely.
+				let tmpSourceSize = tmpSourceCol.hasOwnProperty('Size') ? tmpSourceCol.Size : '';
+				let tmpTargetSize = tmpTargetCol.hasOwnProperty('Size') ? tmpTargetCol.Size : '';
+				if ((tmpSourceSize || '') !== (tmpTargetSize || ''))
 				{
 					tmpChanges.Size = { From: tmpSourceSize, To: tmpTargetSize };
 					tmpHasColumnChanges = true;
