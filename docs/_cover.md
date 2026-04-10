@@ -1,4 +1,4 @@
-# Meadow Migration Manager <small>0.0.1</small>
+# Meadow Migration Manager
 
 > Database schema migration management for the Meadow ecosystem
 
