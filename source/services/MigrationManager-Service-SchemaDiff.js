@@ -277,15 +277,28 @@ class MigrationManagerServiceSchemaDiff extends libFableServiceBase
 					tmpHasColumnChanges = true;
 				}
 
-				// Compare Size — treat empty string, undefined, and absent as equivalent
-				// (all mean "no specific size").  Introspection often returns '' while
-				// the target schema may omit the property entirely.
-				let tmpSourceSize = tmpSourceCol.hasOwnProperty('Size') ? tmpSourceCol.Size : '';
-				let tmpTargetSize = tmpTargetCol.hasOwnProperty('Size') ? tmpTargetCol.Size : '';
-				if ((tmpSourceSize || '') !== (tmpTargetSize || ''))
+				// Compare Size — only meaningful for DataTypes whose native SQL
+				// type actually varies by Size (GUID, String, Decimal).  For
+				// Numeric, ForeignKey, Boolean, DateTime, Text, and ID, Size is
+				// a DDL-level hint (e.g. "int") that every MigrationGenerator
+				// ignores; treating it as a delta would cause spurious ALTERs
+				// on every run (introspection returns Size:'' for INT columns
+				// while meadow models emit Size:'int' for Numeric).
+				//
+				// Normalize empty string, undefined, and absent Size as
+				// equivalent ("no specific size").
+				let tmpEffectiveDataType = tmpChanges.DataType ? tmpTargetCol.DataType : tmpSourceCol.DataType;
+				if (this._isSizeSignificantForDataType(tmpEffectiveDataType))
 				{
-					tmpChanges.Size = { From: tmpSourceSize, To: tmpTargetSize };
-					tmpHasColumnChanges = true;
+					let tmpSourceSize = tmpSourceCol.hasOwnProperty('Size') ? tmpSourceCol.Size : '';
+					let tmpTargetSize = tmpTargetCol.hasOwnProperty('Size') ? tmpTargetCol.Size : '';
+					let tmpNormSourceSize = (tmpSourceSize === null || tmpSourceSize === undefined) ? '' : String(tmpSourceSize);
+					let tmpNormTargetSize = (tmpTargetSize === null || tmpTargetSize === undefined) ? '' : String(tmpTargetSize);
+					if (tmpNormSourceSize !== tmpNormTargetSize)
+					{
+						tmpChanges.Size = { From: tmpSourceSize, To: tmpTargetSize };
+						tmpHasColumnChanges = true;
+					}
 				}
 
 				// Compare Indexed
@@ -415,6 +428,25 @@ class MigrationManagerServiceSchemaDiff extends libFableServiceBase
 			return true;
 		}
 		return false;
+	}
+
+	/**
+	 * Check whether the Size property affects the native SQL type produced
+	 * by MigrationGenerator for the given Meadow DataType.
+	 *
+	 * Size is only meaningful for types whose native SQL form includes a
+	 * length or precision (GUID → CHAR/NCHAR(N), String → VARCHAR/NVARCHAR(N),
+	 * Decimal → DECIMAL(precision[,scale])).  For all other types (Numeric,
+	 * ForeignKey, Boolean, DateTime, Text, ID) the MigrationGenerator maps
+	 * to a fixed native type and ignores Size entirely.
+	 *
+	 * @param {string} pDataType - The Meadow DataType
+	 *
+	 * @return {boolean} True if Size affects the native type
+	 */
+	_isSizeSignificantForDataType(pDataType)
+	{
+		return (pDataType === 'GUID' || pDataType === 'String' || pDataType === 'Decimal');
 	}
 
 	/**
