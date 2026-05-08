@@ -9,8 +9,8 @@
 
 body {
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-	background: #f5f5f5;
-	color: #333;
+	background: var(--theme-color-background-secondary, #f5f5f5);
+	color: var(--theme-color-text-primary, #333);
 	height: 100vh;
 	overflow: hidden;
 }
@@ -53,19 +53,19 @@ body {
 
 .migration-manager-nav li a:hover {
 	background: #34495e;
-	color: #fff;
+	color: var(--theme-color-background-panel, #fff);
 }
 
 .migration-manager-nav li a.active {
 	background: #3498db;
-	color: #fff;
+	color: var(--theme-color-background-panel, #fff);
 }
 
 .migration-manager-content {
 	flex: 1;
 	padding: 24px 32px;
 	overflow-y: auto;
-	background: #fff;
+	background: var(--theme-color-background-panel, #fff);
 }
 
 h2 {
@@ -85,13 +85,13 @@ h2 {
 .schema-table th, .schema-table td {
 	padding: 10px 14px;
 	text-align: left;
-	border-bottom: 1px solid #e0e0e0;
+	border-bottom: 1px solid var(--theme-color-border-default, #e0e0e0);
 }
 
 .schema-table th {
 	background: #f8f9fa;
 	font-weight: 600;
-	color: #555;
+	color: var(--theme-color-text-secondary, #555);
 	font-size: 13px;
 	text-transform: uppercase;
 	letter-spacing: 0.5px;
@@ -119,12 +119,12 @@ h2 {
 	font-weight: 600;
 }
 
-.badge-yes { background: #d5f5e3; color: #27ae60; }
+.badge-yes { background: #d5f5e3; color: var(--theme-color-status-success, #27ae60); }
 .badge-no { background: #fde8e8; color: #c0392b; }
 
 pre.code-block {
 	background: #1e1e1e;
-	color: #d4d4d4;
+	color: var(--theme-color-border-default, #d4d4d4);
 	padding: 16px;
 	border-radius: 6px;
 	font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
@@ -146,11 +146,11 @@ pre.code-block {
 	transition: background 0.15s;
 }
 
-.btn-primary { background: #3498db; color: #fff; }
+.btn-primary { background: #3498db; color: var(--theme-color-background-panel, #fff); }
 .btn-primary:hover { background: #2980b9; }
-.btn-secondary { background: #95a5a6; color: #fff; }
+.btn-secondary { background: #95a5a6; color: var(--theme-color-background-panel, #fff); }
 .btn-secondary:hover { background: #7f8c8d; }
-.btn-success { background: #27ae60; color: #fff; }
+.btn-success { background: var(--theme-color-status-success, #27ae60); color: var(--theme-color-background-panel, #fff); }
 .btn-success:hover { background: #229954; }
 
 .form-group {
@@ -162,7 +162,7 @@ pre.code-block {
 	margin-bottom: 6px;
 	font-weight: 600;
 	font-size: 14px;
-	color: #555;
+	color: var(--theme-color-text-secondary, #555);
 }
 
 .form-group select,
@@ -170,7 +170,7 @@ pre.code-block {
 .form-group input[type="password"],
 .form-group input[type="number"] {
 	padding: 8px 12px;
-	border: 1px solid #ccc;
+	border: 1px solid var(--theme-color-border-default, #ccc);
 	border-radius: 4px;
 	font-size: 14px;
 	min-width: 200px;
@@ -195,7 +195,7 @@ pre.code-block {
 
 .source-toggle {
 	display: inline-flex;
-	border: 1px solid #ccc;
+	border: 1px solid var(--theme-color-border-default, #ccc);
 	border-radius: 4px;
 	overflow: hidden;
 	margin-bottom: 12px;
@@ -206,8 +206,8 @@ pre.code-block {
 	font-size: 13px;
 	cursor: pointer;
 	background: #f8f9fa;
-	color: #555;
-	border-right: 1px solid #ccc;
+	color: var(--theme-color-text-secondary, #555);
+	border-right: 1px solid var(--theme-color-border-default, #ccc);
 	transition: background 0.15s, color 0.15s;
 }
 
@@ -222,7 +222,7 @@ pre.code-block {
 .source-toggle input[type="radio"]:checked + label,
 .source-toggle label.active {
 	background: #3498db;
-	color: #fff;
+	color: var(--theme-color-background-panel, #fff);
 }
 
 .conn-status {
@@ -233,7 +233,7 @@ pre.code-block {
 	margin-right: 6px;
 }
 
-.conn-status-ok { background: #27ae60; }
+.conn-status-ok { background: var(--theme-color-status-success, #27ae60); }
 .conn-status-fail { background: #c0392b; }
 .conn-status-unknown { background: #95a5a6; }
 
@@ -248,13 +248,13 @@ pre.code-block {
 .status-error { background: #fde8e8; color: #c0392b; }
 
 .loading {
-	color: #999;
+	color: var(--theme-color-text-muted, #999);
 	font-style: italic;
 }
 
 .tab-bar {
 	display: flex;
-	border-bottom: 2px solid #e0e0e0;
+	border-bottom: 2px solid var(--theme-color-border-default, #e0e0e0);
 	margin-bottom: 16px;
 }
 
@@ -264,7 +264,7 @@ pre.code-block {
 	background: none;
 	font-size: 14px;
 	cursor: pointer;
-	color: #999;
+	color: var(--theme-color-text-muted, #999);
 	border-bottom: 2px solid transparent;
 	margin-bottom: -2px;
 	transition: all 0.15s;
@@ -281,7 +281,7 @@ pre.code-block {
 
 .json-viewer {
 	background: #f8f9fa;
-	border: 1px solid #e0e0e0;
+	border: 1px solid var(--theme-color-border-default, #e0e0e0);
 	border-radius: 6px;
 	padding: 16px;
 	font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
@@ -316,7 +316,7 @@ pre.code-block {
 	padding: 8px 14px;
 	border: none;
 	background: #1e1e1e;
-	color: #e0e0e0;
+	color: var(--theme-color-border-default, #e0e0e0);
 	font-size: 13px;
 	font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
 	cursor: pointer;
@@ -333,7 +333,7 @@ pre.code-block {
 }
 
 .mddl-file-dropdown-trigger .file-meta {
-	color: #888;
+	color: var(--theme-color-text-muted, #888);
 	font-size: 11px;
 	margin-left: 12px;
 }
@@ -341,7 +341,7 @@ pre.code-block {
 .mddl-file-dropdown-trigger .dropdown-arrow {
 	margin-left: 8px;
 	font-size: 10px;
-	color: #888;
+	color: var(--theme-color-text-muted, #888);
 	transition: transform 0.15s;
 }
 
@@ -411,12 +411,12 @@ pre.code-block {
 }
 
 .mddl-file-dropdown-item .file-chain .chain-separator {
-	color: #555;
+	color: var(--theme-color-text-secondary, #555);
 	margin: 0 3px;
 }
 
 .mddl-file-dropdown-item .file-chain .chain-leaf {
-	color: #e0e0e0;
+	color: var(--theme-color-border-default, #e0e0e0);
 	font-weight: 600;
 }
 
@@ -435,7 +435,7 @@ pre.code-block {
 
 .mddl-editor-wrap {
 	display: flex;
-	border: 1px solid #444;
+	border: 1px solid var(--theme-color-text-secondary, #444);
 	border-radius: 0 0 6px 6px;
 	background: #1e1e1e;
 	overflow: hidden;
@@ -458,7 +458,7 @@ pre.code-block {
 	user-select: none;
 	min-width: 44px;
 	overflow: hidden;
-	border-right: 1px solid #333;
+	border-right: 1px solid var(--theme-color-text-primary, #333);
 }
 
 .mddl-line-numbers span {
@@ -472,7 +472,7 @@ pre.code-block {
 	font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
 	font-size: 13px;
 	line-height: 1.5;
-	color: #d4d4d4;
+	color: var(--theme-color-border-default, #d4d4d4);
 	background: #1e1e1e;
 	overflow: auto;
 	outline: none;
@@ -507,7 +507,7 @@ pre.code-block {
 	min-height: 500px;
 	border: 1px solid #d0d4d8;
 	border-radius: 6px;
-	background: #fafafa;
+	background: var(--theme-color-background-secondary, #fafafa);
 	position: relative;
 	overflow: hidden;
 }
@@ -1508,7 +1508,7 @@ pre.code-block {
 	 */
 	function generateColumnDetailHTML(pColumns)
 	{
-		if (!pColumns || pColumns.length === 0) return '<div style="padding:8px;color:#999;">No columns</div>';
+		if (!pColumns || pColumns.length === 0) return '<div style="padding:8px;color:var(--theme-color-text-muted, #999);">No columns</div>';
 
 		var tmpHTML = '<div style="font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Roboto,sans-serif;font-size:12px;line-height:1.2;">';
 
@@ -1523,12 +1523,12 @@ pre.code-block {
 			if (tmpCol.DataType === 'ID')
 			{
 				tmpNameColor = '#c0392b';
-				tmpBadge = '<span style="background:#c0392b;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;margin-left:6px;">PK</span>';
+				tmpBadge = '<span style="background:#c0392b;color:var(--theme-color-background-panel, #fff);font-size:9px;padding:1px 4px;border-radius:3px;margin-left:6px;">PK</span>';
 			}
 			else if (tmpCol.IsFK)
 			{
 				tmpNameColor = '#2980b9';
-				tmpBadge = '<span style="background:#2980b9;color:#fff;font-size:9px;padding:1px 4px;border-radius:3px;margin-left:6px;">FK</span>';
+				tmpBadge = '<span style="background:#2980b9;color:var(--theme-color-background-panel, #fff);font-size:9px;padding:1px 4px;border-radius:3px;margin-left:6px;">FK</span>';
 			}
 
 			tmpHTML += '<div style="display:flex;justify-content:space-between;align-items:center;padding:4px 8px;background:' + tmpBg + ';">';
@@ -1772,13 +1772,13 @@ pre.code-block {
 
 			html += '<div id="viz-tab-flow">';
 		html += '<div style="display:flex;flex-wrap:wrap;align-items:center;gap:4px 16px;margin-bottom:8px;">';
-		html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;cursor:pointer;user-select:none;">';
+		html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--theme-color-text-secondary, #555);cursor:pointer;user-select:none;">';
 		html += '<input type="checkbox" id="viz-hide-auto-conns"' + (flowState.hideAutoConnections ? ' checked' : '') + '>';
-		html += 'Hide audit trail connections <span style="color:#999;font-size:11px;">(CreatingIDUser, UpdatingIDUser, DeletingIDUser)</span>';
+		html += 'Hide audit trail connections <span style="color:var(--theme-color-text-muted, #999);font-size:11px;">(CreatingIDUser, UpdatingIDUser, DeletingIDUser)</span>';
 		html += '</label>';
-		html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:#555;cursor:pointer;user-select:none;">';
+		html += '<label style="display:flex;align-items:center;gap:6px;font-size:13px;color:var(--theme-color-text-secondary, #555);cursor:pointer;user-select:none;">';
 		html += '<input type="checkbox" id="viz-hide-customer-joins"' + (flowState.hideCustomerJoins ? ' checked' : '') + '>';
-		html += 'Hide customer joins <span style="color:#999;font-size:11px;">(IDCustomer → Customer)</span>';
+		html += 'Hide customer joins <span style="color:var(--theme-color-text-muted, #999);font-size:11px;">(IDCustomer → Customer)</span>';
 		html += '</label>';
 		html += '</div>';
 		html += '<div class="flow-diagram-container" id="viz-flow-container"></div>';
@@ -2095,18 +2095,18 @@ pre.code-block {
 					var saveName = document.getElementById('introspect-save-name').value.trim();
 					var saveStatus = document.getElementById('introspect-save-status');
 					if (!saveName) {
-						saveStatus.innerHTML = '<span style="color:#e74c3c">Name is required.</span>';
+						saveStatus.innerHTML = '<span style="color:var(--theme-color-status-error, #e74c3c)">Name is required.</span>';
 						return;
 					}
 					saveStatus.innerHTML = '<span class="loading">Saving...</span>';
 					api('POST', '/api/connections/' + encodeURIComponent(name) + '/introspect', { saveAs: saveName }).then(function(res) {
 						if (res.Success && res.SavedAs) {
-							saveStatus.innerHTML = '<span style="color:#27ae60">Saved as <strong>' + escapeHTML(res.SavedAs) + '</strong>.</span>';
+							saveStatus.innerHTML = '<span style="color:var(--theme-color-status-success, #27ae60)">Saved as <strong>' + escapeHTML(res.SavedAs) + '</strong>.</span>';
 						} else {
-							saveStatus.innerHTML = '<span style="color:#e74c3c">' + escapeHTML(res.Error || 'Save failed.') + '</span>';
+							saveStatus.innerHTML = '<span style="color:var(--theme-color-status-error, #e74c3c)">' + escapeHTML(res.Error || 'Save failed.') + '</span>';
 						}
 					}).catch(function() {
-						saveStatus.innerHTML = '<span style="color:#e74c3c">Request failed.</span>';
+						saveStatus.innerHTML = '<span style="color:var(--theme-color-status-error, #e74c3c)">Request failed.</span>';
 					});
 				});
 			} else {

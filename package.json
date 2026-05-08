@@ -1,6 +1,6 @@
 {
 	"name": "meadow-migrationmanager",
-	"version": "0.0.15",
+	"version": "0.0.16",
 	"description": "Meadow Migration Manager - CLI, Web, and Console UI tool for managing database schemas and migrations",
 	"main": "source/MeadowMigrationManager.js",
 	"bin": {

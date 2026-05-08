@@ -189,10 +189,10 @@ MigrationManagerViewSchemaVisualizer.default_configuration =
 		}
 		#MigrationManager-SchemaFlow-Container {
 			height: 500px;
-			border: 1px solid #ddd;
+			border: 1px solid var(--theme-color-border-default, #ddd);
 			border-radius: 4px;
 			margin-bottom: 1em;
-			background: #fafafa;
+			background: var(--theme-color-background-secondary, #fafafa);
 		}
 		.visualizer-section {
 			margin-bottom: 1em;
@@ -204,7 +204,7 @@ MigrationManagerViewSchemaVisualizer.default_configuration =
 		}
 		.visualizer-section pre {
 			background: #f8f9fa;
-			border: 1px solid #e0e0e0;
+			border: 1px solid var(--theme-color-border-default, #e0e0e0);
 			border-radius: 4px;
 			padding: 1em;
 			overflow-x: auto;

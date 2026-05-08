@@ -181,10 +181,10 @@ MigrationManagerViewSchemaMigrator.default_configuration =
 		}
 		#MigrationManager-MigratorFlow-Container {
 			height: 400px;
-			border: 1px solid #ddd;
+			border: 1px solid var(--theme-color-border-default, #ddd);
 			border-radius: 4px;
 			margin-bottom: 1em;
-			background: #fafafa;
+			background: var(--theme-color-background-secondary, #fafafa);
 		}
 		.migrator-diff-legend {
 			display: flex;
@@ -203,7 +203,7 @@ MigrationManagerViewSchemaMigrator.default_configuration =
 			height: 12px;
 			border-radius: 3px;
 		}
-		.legend-dot-added { background: #27ae60; }
+		.legend-dot-added { background: var(--theme-color-status-success, #27ae60); }
 		.legend-dot-removed { background: #c0392b; }
 		.legend-dot-modified { background: #e67e22; }
 		.legend-dot-unchanged { background: #2c3e50; }
@@ -218,7 +218,7 @@ MigrationManagerViewSchemaMigrator.default_configuration =
 		}
 		.migrator-diff pre {
 			background: #f8f9fa;
-			border: 1px solid #e0e0e0;
+			border: 1px solid var(--theme-color-border-default, #e0e0e0);
 			border-radius: 4px;
 			padding: 1em;
 			overflow-x: auto;
@@ -230,7 +230,7 @@ MigrationManagerViewSchemaMigrator.default_configuration =
 		.migrator-actions button {
 			padding: 0.5em 1.5em;
 			margin-right: 0.5em;
-			border: 1px solid #ddd;
+			border: 1px solid var(--theme-color-border-default, #ddd);
 			border-radius: 4px;
 			cursor: pointer;
 			font-size: 0.9em;
