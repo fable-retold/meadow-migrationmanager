@@ -26,7 +26,7 @@
 	"author": "Steven Velozo <steven@velozo.com>",
 	"license": "MIT",
 	"devDependencies": {
-		"pict-docuserve": "^0.1.5",
+		"pict-docuserve": "^1.0.1",
 		"quackage": "^1.2.3"
 	},
 	"dependencies": {
@@ -38,17 +38,17 @@
 		"meadow-connection-mssql": "^1.0.23",
 		"meadow-connection-mysql": "^1.0.19",
 		"meadow-connection-postgresql": "^1.0.5",
-		"meadow-connection-sqlite": "^1.0.19",
+		"meadow-connection-sqlite": "^1.0.20",
 		"mkdirp": "^3.0.1",
 		"orator": "^6.1.2",
 		"orator-serviceserver-restify": "^2.0.11",
-		"pict": "^1.0.366",
+		"pict": "^1.0.368",
 		"pict-application": "^1.0.34",
-		"pict-section-flow": "^0.0.17",
+		"pict-section-flow": "^0.0.19",
 		"pict-service-commandlineutility": "^1.0.19",
 		"pict-terminalui": "^0.0.3",
 		"pict-view": "^1.0.68",
-		"stricture": "^4.0.2"
+		"stricture": "^4.0.3"
 	},
 	"mocha": {
 		"diff": true,
