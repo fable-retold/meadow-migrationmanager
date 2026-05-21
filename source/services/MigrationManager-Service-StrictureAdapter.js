@@ -371,6 +371,12 @@ class MigrationManagerServiceStrictureAdapter extends libFableServiceBase
 				tmpMeadowModel.Authorization = pCompiledSchema.Authorization[tmpTable.TableName];
 			}
 
+			// Carry named indices through so the connector's createIndex pipeline picks them up
+			if (Array.isArray(tmpTable.Indices) && tmpTable.Indices.length > 0)
+			{
+				tmpMeadowModel.Indices = JSON.parse(JSON.stringify(tmpTable.Indices));
+			}
+
 			tmpPackages.push(tmpMeadowModel);
 		}
 
