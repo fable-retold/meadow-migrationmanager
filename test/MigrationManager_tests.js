@@ -402,6 +402,75 @@ suite
 							});
 					}
 				);
+
+				test
+				(
+					'Should parse + named-index MDDL lines into compiled Tables[].Indices and Meadow package Indices',
+					function (fDone)
+					{
+						this.timeout(15000);
+
+						let tmpManager = new libMeadowMigrationManager({});
+						let tmpAdapter = tmpManager.instantiateServiceProvider('StrictureAdapter');
+
+						// MDDL with the new + index line type. Covers single-column unique,
+						// single-column regular, and multi-column composite indexes.
+						let tmpDDL =
+							'!User\n' +
+							'@IDUser\n' +
+							'$UserName 128\n' +
+							'$Email 256\n' +
+							'^Active\n' +
+							'+!AK_User_Username UserName\n' +
+							'+IX_User_Email Email\n' +
+							'\n' +
+							'!UserSession\n' +
+							'@IDUserSession\n' +
+							'#IDUser -> IDUser\n' +
+							'$SessionToken 256\n' +
+							'&LoginDate\n' +
+							'+!AK_UserSession_Token SessionToken\n' +
+							'+IX_UserSession_UserDate IDUser, LoginDate\n';
+
+						tmpAdapter.compileAndGenerate(tmpDDL,
+							function (pError, pSchema, pPackages)
+							{
+								libAssert.ifError(pError);
+
+								// 1. Compiled DDL Tables[User].Indices populated from + lines
+								libAssert.ok(pSchema.Tables.User, 'User table should be compiled');
+								libAssert.ok(Array.isArray(pSchema.Tables.User.Indices), 'User table should have Indices array');
+								libAssert.strictEqual(pSchema.Tables.User.Indices.length, 2, 'User should have 2 declared indexes');
+
+								let tmpUserUsernameIdx = pSchema.Tables.User.Indices.find((pIdx) => pIdx.Name === 'AK_User_Username');
+								libAssert.ok(tmpUserUsernameIdx, 'AK_User_Username should be present');
+								libAssert.strictEqual(tmpUserUsernameIdx.Unique, true, 'AK_User_Username should be unique');
+								libAssert.deepStrictEqual(tmpUserUsernameIdx.Columns, ['UserName']);
+
+								let tmpUserEmailIdx = pSchema.Tables.User.Indices.find((pIdx) => pIdx.Name === 'IX_User_Email');
+								libAssert.ok(tmpUserEmailIdx, 'IX_User_Email should be present');
+								libAssert.strictEqual(tmpUserEmailIdx.Unique, false, 'IX_User_Email should NOT be unique');
+
+								// 2. Composite index column order preserved
+								let tmpComposite = pSchema.Tables.UserSession.Indices.find((pIdx) => pIdx.Name === 'IX_UserSession_UserDate');
+								libAssert.ok(tmpComposite, 'IX_UserSession_UserDate should be present');
+								libAssert.deepStrictEqual(tmpComposite.Columns, ['IDUser', 'LoginDate']);
+
+								// 3. Meadow package carries Indices through for connector consumption
+								let tmpUserPackage = pPackages.find((pPkg) => pPkg.Scope === 'User');
+								libAssert.ok(tmpUserPackage, 'User package should exist');
+								libAssert.ok(Array.isArray(tmpUserPackage.Indices), 'User package should carry Indices');
+								libAssert.strictEqual(tmpUserPackage.Indices.length, 2);
+
+								let tmpSessionPackage = pPackages.find((pPkg) => pPkg.Scope === 'UserSession');
+								libAssert.ok(tmpSessionPackage, 'UserSession package should exist');
+								let tmpPackageComposite = tmpSessionPackage.Indices.find((pIdx) => pIdx.Name === 'IX_UserSession_UserDate');
+								libAssert.deepStrictEqual(tmpPackageComposite.Columns, ['IDUser', 'LoginDate']);
+
+								return fDone();
+							});
+					}
+				);
 			}
 		);
 
@@ -1068,6 +1137,132 @@ suite
 						libAssert.strictEqual(tmpStatements.length, 1);
 						libAssert.ok(tmpStatements[0].indexOf('DROP COLUMN') >= 0);
 						libAssert.ok(tmpStatements[0].indexOf('SQLite 3.35') >= 0, 'Should include SQLite version note');
+					}
+				);
+
+				test
+				(
+					'Should generate CREATE INDEX for non-unique IndicesAdded',
+					function ()
+					{
+						let tmpManager = new libMeadowMigrationManager({});
+						let tmpMigGen = tmpManager.instantiateServiceProvider('MigrationGenerator');
+
+						let tmpDiff = {
+							TablesAdded: [],
+							TablesRemoved: [],
+							TablesModified: [{
+								TableName: 'Book',
+								ColumnsAdded: [],
+								ColumnsRemoved: [],
+								ColumnsModified: [],
+								IndicesAdded: [{ Name: 'IX_Title', Columns: ['Title'], Unique: false }],
+								IndicesRemoved: [],
+								ForeignKeysAdded: [],
+								ForeignKeysRemoved: []
+							}]
+						};
+
+						let tmpStatements = tmpMigGen.generateMigrationStatements(tmpDiff, 'MySQL');
+						libAssert.strictEqual(tmpStatements.length, 1);
+						libAssert.ok(tmpStatements[0].indexOf('CREATE INDEX') === 0, 'Should start with CREATE INDEX');
+						libAssert.ok(tmpStatements[0].indexOf('CREATE UNIQUE INDEX') < 0, 'Should not be UNIQUE');
+						libAssert.ok(tmpStatements[0].indexOf('`IX_Title`') >= 0, 'Should backtick-quote index name');
+						libAssert.ok(tmpStatements[0].indexOf('`Book`') >= 0, 'Should backtick-quote table name');
+						libAssert.ok(tmpStatements[0].indexOf('(`Title`)') >= 0, 'Should backtick-quote column name');
+					}
+				);
+
+				test
+				(
+					'Should generate CREATE UNIQUE INDEX when Unique is true',
+					function ()
+					{
+						let tmpManager = new libMeadowMigrationManager({});
+						let tmpMigGen = tmpManager.instantiateServiceProvider('MigrationGenerator');
+
+						let tmpDiff = {
+							TablesAdded: [],
+							TablesRemoved: [],
+							TablesModified: [{
+								TableName: 'Book',
+								ColumnsAdded: [],
+								ColumnsRemoved: [],
+								ColumnsModified: [],
+								IndicesAdded: [{ Name: 'AK_ISBN', Columns: ['ISBN'], Unique: true }],
+								IndicesRemoved: [],
+								ForeignKeysAdded: [],
+								ForeignKeysRemoved: []
+							}]
+						};
+
+						let tmpStatements = tmpMigGen.generateMigrationStatements(tmpDiff, 'MySQL');
+						libAssert.strictEqual(tmpStatements.length, 1);
+						libAssert.ok(tmpStatements[0].indexOf('CREATE UNIQUE INDEX') === 0, 'Should start with CREATE UNIQUE INDEX');
+						libAssert.ok(tmpStatements[0].indexOf('`AK_ISBN`') >= 0, 'Should quote index name');
+						libAssert.ok(tmpStatements[0].indexOf('(`ISBN`)') >= 0, 'Should quote column name');
+					}
+				);
+
+				test
+				(
+					'Should honor Strategy with USING clause after column list',
+					function ()
+					{
+						let tmpManager = new libMeadowMigrationManager({});
+						let tmpMigGen = tmpManager.instantiateServiceProvider('MigrationGenerator');
+
+						let tmpDiff = {
+							TablesAdded: [],
+							TablesRemoved: [],
+							TablesModified: [{
+								TableName: 'Book',
+								ColumnsAdded: [],
+								ColumnsRemoved: [],
+								ColumnsModified: [],
+								IndicesAdded: [{ Name: 'IX_Title', Columns: ['Title'], Unique: false, Strategy: 'BTREE' }],
+								IndicesRemoved: [],
+								ForeignKeysAdded: [],
+								ForeignKeysRemoved: []
+							}]
+						};
+
+						let tmpStatements = tmpMigGen.generateMigrationStatements(tmpDiff, 'MySQL');
+						libAssert.strictEqual(tmpStatements.length, 1);
+						libAssert.ok(tmpStatements[0].indexOf('USING BTREE') >= 0, 'Should emit USING BTREE');
+						libAssert.ok(tmpStatements[0].indexOf('(`Title`) USING BTREE') >= 0, 'USING should follow column list');
+					}
+				);
+
+				test
+				(
+					'Should emit CREATE INDEX with composite columns and quote each one',
+					function ()
+					{
+						let tmpManager = new libMeadowMigrationManager({});
+						let tmpMigGen = tmpManager.instantiateServiceProvider('MigrationGenerator');
+
+						let tmpDiff = {
+							TablesAdded: [],
+							TablesRemoved: [],
+							TablesModified: [{
+								TableName: 'Book',
+								ColumnsAdded: [],
+								ColumnsRemoved: [],
+								ColumnsModified: [],
+								IndicesAdded: [{ Name: 'IX_Compound', Columns: ['Title', 'Genre'], Unique: false }],
+								IndicesRemoved: [],
+								ForeignKeysAdded: [],
+								ForeignKeysRemoved: []
+							}]
+						};
+
+						let tmpPG = tmpMigGen.generateMigrationStatements(tmpDiff, 'PostgreSQL');
+						libAssert.strictEqual(tmpPG.length, 1);
+						libAssert.ok(tmpPG[0].indexOf('("Title", "Genre")') >= 0, 'PostgreSQL should quote each column with double quotes');
+
+						let tmpMSSQL = tmpMigGen.generateMigrationStatements(tmpDiff, 'MSSQL');
+						libAssert.ok(tmpMSSQL[0].indexOf('([Title], [Genre])') >= 0, 'MSSQL should bracket-quote each column');
 					}
 				);
 

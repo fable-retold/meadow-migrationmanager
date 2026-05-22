@@ -393,8 +393,11 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 			{
 				let tmpIndex = tmpIndicesAdded[j];
 				let tmpIndexName = this._quoteIdentifier(tmpIndex.Name, pDatabaseType);
-				let tmpIndexColumns = Array.isArray(tmpIndex.Columns) ? tmpIndex.Columns.join(', ') : tmpIndex.Columns;
-				tmpStatements.push('CREATE INDEX ' + tmpIndexName + ' ON ' + tmpTableName + ' (' + tmpIndexColumns + ')');
+				let tmpRawColumns = Array.isArray(tmpIndex.Columns) ? tmpIndex.Columns : [tmpIndex.Columns];
+				let tmpIndexColumns = tmpRawColumns.map((pCol) => { return this._quoteIdentifier(pCol, pDatabaseType); }).join(', ');
+				let tmpCreateKeyword = tmpIndex.Unique ? 'CREATE UNIQUE INDEX' : 'CREATE INDEX';
+				let tmpStrategyClause = tmpIndex.Strategy ? ' USING ' + tmpIndex.Strategy : '';
+				tmpStatements.push(tmpCreateKeyword + ' ' + tmpIndexName + ' ON ' + tmpTableName + ' (' + tmpIndexColumns + ')' + tmpStrategyClause);
 			}
 
 			// Indices removed

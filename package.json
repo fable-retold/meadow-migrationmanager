@@ -48,7 +48,7 @@
 		"pict-service-commandlineutility": "^1.0.19",
 		"pict-terminalui": "^1.0.0",
 		"pict-view": "^1.0.68",
-		"stricture": "^4.0.3"
+		"stricture": "^4.0.6"
 	},
 	"mocha": {
 		"diff": true,
