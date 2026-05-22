@@ -1,6 +1,6 @@
 {
 	"name": "meadow-migrationmanager",
-	"version": "1.0.1",
+	"version": "1.0.3",
 	"description": "Meadow Migration Manager - CLI, Web, and Console UI tool for managing database schemas and migrations",
 	"main": "source/MeadowMigrationManager.js",
 	"bin": {
@@ -42,7 +42,7 @@
 		"mkdirp": "^3.0.1",
 		"orator": "^6.1.2",
 		"orator-serviceserver-restify": "^2.0.11",
-		"pict": "^1.0.370",
+		"pict": "^1.0.372",
 		"pict-application": "^1.0.34",
 		"pict-section-flow": "^1.0.1",
 		"pict-service-commandlineutility": "^1.0.19",
