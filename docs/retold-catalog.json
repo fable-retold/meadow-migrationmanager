@@ -1,147 +1,90 @@
 {
-	"Generated": "2026-04-10T17:21:43.767Z",
+	"Generated": "2026-05-22T05:57:37.944Z",
+	"Mode": "module",
 	"GitHubOrg": "stevenvelozo",
 	"DefaultBranch": "master",
-	"Groups": [
-		{
-			"Name": "Dist",
-			"Key": "dist",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "indoctrinate_content_staging",
-					"Repo": "indoctrinate_content_staging",
-					"Group": "dist",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				}
-			]
-		},
-		{
-			"Name": "Docs",
-			"Key": "docs",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "css",
-					"Repo": "css",
-					"Group": "docs",
-					"Branch": "master",
-					"HasDocs": true,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": [
-						"css/docuserve.css"
-					]
-				}
-			]
-		},
-		{
-			"Name": "Source",
-			"Key": "source",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "commands",
-					"Repo": "commands",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "flowcards",
-					"Repo": "flowcards",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "providers",
-					"Repo": "providers",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "services",
-					"Repo": "services",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "tui",
-					"Repo": "tui",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "views",
-					"Repo": "views",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "web",
-					"Repo": "web",
-					"Group": "source",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				}
-			]
-		},
-		{
-			"Name": "Test",
-			"Key": "test",
-			"Description": "",
-			"Modules": [
-				{
-					"Name": "fixtures",
-					"Repo": "fixtures",
-					"Group": "test",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				},
-				{
-					"Name": "fixtures-multifile",
-					"Repo": "fixtures-multifile",
-					"Group": "test",
-					"Branch": "master",
-					"HasDocs": false,
-					"HasCover": false,
-					"Sidebar": [],
-					"DocFiles": []
-				}
-			]
-		}
-	]
+	"Module": {
+		"Name": "meadow-migrationmanager",
+		"Repo": "meadow-migrationmanager",
+		"Group": "",
+		"Branch": "master",
+		"HasDocs": true,
+		"HasCover": true,
+		"Sidebar": [
+			{
+				"Title": "Getting Started",
+				"Children": [
+					{
+						"Title": "Overview",
+						"Path": "README.md"
+					},
+					{
+						"Title": "Architecture",
+						"Path": "architecture.md"
+					}
+				]
+			},
+			{
+				"Title": "Guides",
+				"Children": [
+					{
+						"Title": "CLI Guide",
+						"Path": "cli-guide.md"
+					},
+					{
+						"Title": "User Guide",
+						"Path": "user-guide.md"
+					},
+					{
+						"Title": "Web Server",
+						"Path": "web-server.md"
+					}
+				]
+			},
+			{
+				"Title": "Reference",
+				"Children": [
+					{
+						"Title": "API Reference",
+						"Path": "api-reference.md"
+					}
+				]
+			},
+			{
+				"Title": "Retold Ecosystem",
+				"Children": [
+					{
+						"Title": "Stricture",
+						"Path": "https://github.com/stevenvelozo/stricture"
+					},
+					{
+						"Title": "Meadow",
+						"Path": "https://github.com/stevenvelozo/meadow"
+					},
+					{
+						"Title": "Pict",
+						"Path": "https://github.com/stevenvelozo/pict"
+					}
+				]
+			}
+		],
+		"DocFiles": [
+			".nojekyll",
+			"README.md",
+			"_brand.json",
+			"_cover.md",
+			"_sidebar.md",
+			"_topbar.md",
+			"_version.json",
+			"api-reference.md",
+			"architecture.md",
+			"cli-guide.md",
+			"index.html",
+			"retold-catalog.json",
+			"retold-keyword-index.json",
+			"user-guide.md",
+			"web-server.md"
+		]
+	},
+	"Groups": []
 }
