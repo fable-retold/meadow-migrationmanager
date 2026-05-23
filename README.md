@@ -1,5 +1,7 @@
 # Meadow Migration Manager
 
+> **[&#9654; Read the Meadow-Migrationmanager Documentation](https://stevenvelozo.github.io/meadow-migrationmanager/)** &mdash; interactive docs with the full API reference.
+
 > Database schema migration management for the Meadow ecosystem
 
 Meadow Migration Manager is a CLI, Web, and Console UI tool for managing database schemas and migrations. Built on the Fable/Pict service architecture, it provides a complete pipeline from MicroDDL schema definition through compilation, diffing, SQL migration generation, and live database deployment. Interactive visualization is powered by pict-section-flow with field-level foreign key relationship mapping.
