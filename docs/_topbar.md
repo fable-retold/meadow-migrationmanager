@@ -4,4 +4,4 @@
 - [Architecture](architecture.md)
 - [CLI Guide](cli-guide.md)
 - [API Reference](api-reference.md)
-- [GitHub](https://github.com/stevenvelozo/meadow-migrationmanager)
+- [GitHub](https://github.com/fable-retold/meadow-migrationmanager)

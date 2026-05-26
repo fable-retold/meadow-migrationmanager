@@ -55,15 +55,15 @@
 				"Children": [
 					{
 						"Title": "Stricture",
-						"Path": "https://github.com/stevenvelozo/stricture"
+						"Path": "https://github.com/fable-retold/stricture"
 					},
 					{
 						"Title": "Meadow",
-						"Path": "https://github.com/stevenvelozo/meadow"
+						"Path": "https://github.com/fable-retold/meadow"
 					},
 					{
 						"Title": "Pict",
-						"Path": "https://github.com/stevenvelozo/pict"
+						"Path": "https://github.com/fable-retold/pict"
 					}
 				]
 			}

@@ -10,4 +10,4 @@
 - **Three Interfaces** -- CLI, Terminal UI and Web UI for every workflow
 
 [Get Started](README.md)
-[GitHub](https://github.com/stevenvelozo/meadow-migrationmanager)
+[GitHub](https://github.com/fable-retold/meadow-migrationmanager)

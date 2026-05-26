@@ -1,6 +1,6 @@
 # Meadow Migration Manager
 
-> **[&#9654; Read the Meadow-Migrationmanager Documentation](https://stevenvelozo.github.io/meadow-migrationmanager/)** &mdash; interactive docs with the full API reference.
+> **[&#9654; Read the Meadow-Migrationmanager Documentation](https://fable-retold.github.io/meadow-migrationmanager/)** &mdash; interactive docs with the full API reference.
 
 > Database schema migration management for the Meadow ecosystem
 
@@ -97,14 +97,14 @@ Detailed documentation is available in the `docs/` folder.
 
 ## Related Packages
 
-- [stricture](https://github.com/stevenvelozo/stricture) -- MicroDDL compiler and schema toolchain
-- [meadow](https://github.com/stevenvelozo/meadow) -- data access library and ORM
-- [foxhound](https://github.com/stevenvelozo/foxhound) -- query DSL for SQL generation
-- [fable](https://github.com/stevenvelozo/fable) -- application services and dependency injection
-- [pict](https://github.com/stevenvelozo/pict) -- view and application framework
-- [pict-section-flow](https://github.com/stevenvelozo/pict-section-flow) -- interactive flow diagram visualization
-- [pict-service-commandlineutility](https://github.com/stevenvelozo/pict-service-commandlineutility) -- CLI framework
-- [pict-terminalui](https://github.com/stevenvelozo/pict-terminalui) -- terminal UI bridge
+- [stricture](https://github.com/fable-retold/stricture) -- MicroDDL compiler and schema toolchain
+- [meadow](https://github.com/fable-retold/meadow) -- data access library and ORM
+- [foxhound](https://github.com/fable-retold/foxhound) -- query DSL for SQL generation
+- [fable](https://github.com/fable-retold/fable) -- application services and dependency injection
+- [pict](https://github.com/fable-retold/pict) -- view and application framework
+- [pict-section-flow](https://github.com/fable-retold/pict-section-flow) -- interactive flow diagram visualization
+- [pict-service-commandlineutility](https://github.com/fable-retold/pict-service-commandlineutility) -- CLI framework
+- [pict-terminalui](https://github.com/fable-retold/pict-terminalui) -- terminal UI bridge
 
 ## License
 

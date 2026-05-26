@@ -15,6 +15,6 @@
 
 - Retold Ecosystem
 
-  - [Stricture](https://github.com/stevenvelozo/stricture)
-  - [Meadow](https://github.com/stevenvelozo/meadow)
-  - [Pict](https://github.com/stevenvelozo/pict)
+  - [Stricture](https://github.com/fable-retold/stricture)
+  - [Meadow](https://github.com/fable-retold/meadow)
+  - [Pict](https://github.com/fable-retold/pict)
