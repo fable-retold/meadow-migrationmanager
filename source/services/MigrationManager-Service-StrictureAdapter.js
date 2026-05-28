@@ -101,6 +101,16 @@ class MigrationManagerServiceStrictureAdapter extends libFableServiceBase
 					let tmpRawJSON = libFS.readFileSync(tmpExtendedFile, 'utf8');
 					let tmpSchema = JSON.parse(tmpRawJSON);
 
+					// Stricture's MDDL grammar currently treats `+`-prefixed
+					// lines as comments (see the test output's "Comment on
+					// line #N" log lines). Until that lands upstream, parse
+					// + index lines from the original MDDL text ourselves
+					// and attach them as Tables[Name].Indices on the
+					// compiled schema so MeadowPackageGenerator (and the
+					// MigrationGenerator that consumes the package) get the
+					// index information they need.
+					this._attachNamedIndexes(pDDLText, tmpSchema);
+
 					this.log.info('StrictureAdapter: DDL compilation successful.');
 					return tmpCallback(null, tmpSchema);
 				}
@@ -110,6 +120,79 @@ class MigrationManagerServiceStrictureAdapter extends libFableServiceBase
 					return tmpCallback(tmpReadError);
 				}
 			});
+	}
+
+	/**
+	 * Parse `+`-prefixed named-index lines from an MDDL source string and
+	 * attach them to the compiled schema's per-table Indices array.
+	 *
+	 * Recognized syntax (one line per index):
+	 *   +!IndexName Column1[, Column2, ...]   — unique  (alternate key)
+	 *   +IndexName  Column1[, Column2, ...]   — non-unique (lookup index)
+	 *
+	 * Index lines apply to the table opened by the most recent `!TableName`
+	 * line. Whitespace + trailing commas are tolerated; blank lines and any
+	 * non-`+`/non-`!` lines pass through unchanged.
+	 *
+	 * Mutates pSchema in place; safe to call multiple times because each
+	 * call rebuilds the per-table Indices array from the source text.
+	 */
+	_attachNamedIndexes(pDDLText, pSchema)
+	{
+		if (typeof pDDLText !== 'string' || !pSchema || !pSchema.Tables) { return; }
+		let tmpLines = pDDLText.split(/\r?\n/);
+		let tmpByTable = {};
+		let tmpCurrent = null;
+		for (let i = 0; i < tmpLines.length; i++)
+		{
+			let tmpLine = tmpLines[i];
+			let tmpTrimmed = tmpLine.replace(/^\s+/, '');
+			// `!TableName` opens a stanza. Trailing comments / inline notes
+			// after the table name are tolerated.
+			let tmpTableMatch = tmpTrimmed.match(/^!\s*([A-Za-z_][A-Za-z0-9_]*)/);
+			if (tmpTableMatch)
+			{
+				tmpCurrent = tmpTableMatch[1];
+				if (!tmpByTable[tmpCurrent]) { tmpByTable[tmpCurrent] = []; }
+				continue;
+			}
+			// `+!Name Col, Col, ...` or `+Name Col, Col, ...`
+			let tmpIndexMatch = tmpTrimmed.match(/^\+(!?)\s*([A-Za-z_][A-Za-z0-9_]*)\s+(.+?)\s*$/);
+			if (tmpIndexMatch && tmpCurrent)
+			{
+				let tmpUnique = (tmpIndexMatch[1] === '!');
+				let tmpName = tmpIndexMatch[2];
+				let tmpColumns = tmpIndexMatch[3]
+					.split(',')
+					.map(function (pC) { return pC.trim(); })
+					.filter(function (pC) { return pC.length > 0; });
+				if (tmpColumns.length === 0) { continue; }
+				tmpByTable[tmpCurrent].push({ Name: tmpName, Unique: tmpUnique, Columns: tmpColumns });
+			}
+		}
+		// Attach to compiled schema. Stricture's Extended JSON exposes
+		// Tables as either a hash keyed by table name or an array (the
+		// pict.AppData.ModelIndices path uses the hash form, which is what
+		// our test against `pSchema.Tables.User.Indices` expects).
+		let tmpTables = pSchema.Tables;
+		Object.keys(tmpByTable).forEach(function (pTableName)
+		{
+			let tmpEntries = tmpByTable[pTableName];
+			if (tmpEntries.length === 0) { return; }
+			let tmpTable = null;
+			if (tmpTables && typeof tmpTables === 'object' && !Array.isArray(tmpTables))
+			{
+				tmpTable = tmpTables[pTableName];
+			}
+			else if (Array.isArray(tmpTables))
+			{
+				tmpTable = tmpTables.find(function (pT) { return pT && pT.TableName === pTableName; });
+			}
+			if (tmpTable)
+			{
+				tmpTable.Indices = tmpEntries;
+			}
+		});
 	}
 
 	/**
@@ -164,6 +247,23 @@ class MigrationManagerServiceStrictureAdapter extends libFableServiceBase
 				{
 					let tmpRawJSON = libFS.readFileSync(tmpExtendedFile, 'utf8');
 					let tmpSchema = JSON.parse(tmpRawJSON);
+
+					// Same `+`-prefixed named-index parser the inline
+					// compileDDL path uses; see _attachNamedIndexes below.
+					// Reads the original .mddl text off disk so [Include]
+					// directives that pull in additional files are still
+					// honored — only the top-level file is parsed for
+					// index lines (matches Stricture's "comments live in
+					// the source file" model).
+					try
+					{
+						let tmpSourceText = libFS.readFileSync(pFilePath, 'utf8');
+						this._attachNamedIndexes(tmpSourceText, tmpSchema);
+					}
+					catch (eRead)
+					{
+						this.log.warn(`StrictureAdapter: could not re-read source file for index parsing: ${eRead.message}`);
+					}
 
 					this.log.info('StrictureAdapter: DDL file compilation successful.');
 					return tmpCallback(null, tmpSchema);
