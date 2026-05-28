@@ -59,39 +59,47 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 	 * Map a Meadow DataType and Size to a native SQL column type for the
 	 * specified database engine.
 	 *
-	 * @param {string} pDataType - The Meadow DataType (ID, GUID, String, Text, Numeric, Decimal, DateTime, Boolean, ForeignKey)
-	 * @param {string} pSize - The column size specification
-	 * @param {string} pDatabaseType - The database engine ('MySQL'|'PostgreSQL'|'MSSQL'|'SQLite')
+	 * Nullability convention (consistent with the engine connectors'
+	 * CREATE TABLE renderers):
+	 *
+	 *   - ID and GUID columns are ALWAYS NOT NULL — they're the row identity.
+	 *   - Every other type is nullable by default.
+	 *   - `pNullable === false` flips a non-ID/GUID column to NOT NULL.
+	 *
+	 * @param {string}  pDataType - The Meadow DataType (ID, GUID, String, Text, Numeric, Decimal, DateTime, Boolean, ForeignKey)
+	 * @param {string}  pSize - The column size specification
+	 * @param {string}  pDatabaseType - The database engine ('MySQL'|'PostgreSQL'|'MSSQL'|'SQLite')
+	 * @param {boolean} [pNullable] - When false, emit NOT NULL on non-ID/GUID
+	 *                                columns. Anything else (true/undefined)
+	 *                                leaves the column nullable.
 	 *
 	 * @return {string} The native SQL type string
 	 */
-	_mapDataTypeToNative(pDataType, pSize, pDatabaseType)
+	_mapDataTypeToNative(pDataType, pSize, pDatabaseType, pNullable)
 	{
 		switch (pDatabaseType)
 		{
 			case 'MySQL':
-				return this._mapDataTypeMySQL(pDataType, pSize);
+				return this._mapDataTypeMySQL(pDataType, pSize, pNullable);
 			case 'PostgreSQL':
-				return this._mapDataTypePostgreSQL(pDataType, pSize);
+				return this._mapDataTypePostgreSQL(pDataType, pSize, pNullable);
 			case 'MSSQL':
-				return this._mapDataTypeMSSQL(pDataType, pSize);
+				return this._mapDataTypeMSSQL(pDataType, pSize, pNullable);
 			case 'SQLite':
-				return this._mapDataTypeSQLite(pDataType, pSize);
+				return this._mapDataTypeSQLite(pDataType, pSize, pNullable);
 			default:
-				return this._mapDataTypeMySQL(pDataType, pSize);
+				return this._mapDataTypeMySQL(pDataType, pSize, pNullable);
 		}
 	}
 
 	/**
-	 * Map a Meadow DataType to a MySQL native type.
-	 *
-	 * @param {string} pDataType - The Meadow DataType
-	 * @param {string} pSize - The column size specification
-	 *
-	 * @return {string} The MySQL type string
+	 * Map a Meadow DataType to a MySQL native type. See `_mapDataTypeToNative`
+	 * for the nullability rules — `pNullable === false` opts non-ID/GUID
+	 * columns into NOT NULL.
 	 */
-	_mapDataTypeMySQL(pDataType, pSize)
+	_mapDataTypeMySQL(pDataType, pSize, pNullable)
 	{
+		let tmpNotNull = (pNullable === false) ? ' NOT NULL' : '';
 		switch (pDataType)
 		{
 			case 'ID':
@@ -103,34 +111,31 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 				// re-narrowing the column on every migration pass.
 				return 'CHAR(' + (pSize || '255') + ') NOT NULL';
 			case 'ForeignKey':
-				return 'INT UNSIGNED NOT NULL DEFAULT 0';
+				return 'INT UNSIGNED' + tmpNotNull;
 			case 'Numeric':
-				return 'INT NOT NULL DEFAULT 0';
+				return 'INT' + tmpNotNull;
 			case 'Decimal':
-				return 'DECIMAL(' + (pSize || '10,2') + ')';
+				return 'DECIMAL(' + (pSize || '10,2') + ')' + tmpNotNull;
 			case 'String':
-				return 'CHAR(' + (pSize || '64') + ') NOT NULL DEFAULT \'\'';
+				return 'CHAR(' + (pSize || '64') + ')' + tmpNotNull;
 			case 'Text':
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 			case 'DateTime':
-				return 'DATETIME';
+				return 'DATETIME' + tmpNotNull;
 			case 'Boolean':
-				return 'TINYINT NOT NULL DEFAULT 0';
+				return 'TINYINT' + tmpNotNull;
 			default:
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 		}
 	}
 
 	/**
-	 * Map a Meadow DataType to a PostgreSQL native type.
-	 *
-	 * @param {string} pDataType - The Meadow DataType
-	 * @param {string} pSize - The column size specification
-	 *
-	 * @return {string} The PostgreSQL type string
+	 * Map a Meadow DataType to a PostgreSQL native type. See
+	 * `_mapDataTypeToNative` for the nullability rules.
 	 */
-	_mapDataTypePostgreSQL(pDataType, pSize)
+	_mapDataTypePostgreSQL(pDataType, pSize, pNullable)
 	{
+		let tmpNotNull = (pNullable === false) ? ' NOT NULL' : '';
 		switch (pDataType)
 		{
 			case 'ID':
@@ -140,21 +145,21 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 				// default in meadow-connection-postgresql.
 				return 'CHAR(' + (pSize || '255') + ') NOT NULL';
 			case 'ForeignKey':
-				return 'INTEGER NOT NULL DEFAULT 0';
+				return 'INTEGER' + tmpNotNull;
 			case 'Numeric':
-				return 'INTEGER NOT NULL DEFAULT 0';
+				return 'INTEGER' + tmpNotNull;
 			case 'Decimal':
-				return 'NUMERIC(' + (pSize || '10,2') + ')';
+				return 'NUMERIC(' + (pSize || '10,2') + ')' + tmpNotNull;
 			case 'String':
-				return 'VARCHAR(' + (pSize || '64') + ') NOT NULL DEFAULT \'\'';
+				return 'VARCHAR(' + (pSize || '64') + ')' + tmpNotNull;
 			case 'Text':
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 			case 'DateTime':
-				return 'TIMESTAMP';
+				return 'TIMESTAMP' + tmpNotNull;
 			case 'Boolean':
-				return 'BOOLEAN NOT NULL DEFAULT FALSE';
+				return 'BOOLEAN' + tmpNotNull;
 			default:
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 		}
 	}
 
@@ -197,15 +202,12 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 	}
 
 	/**
-	 * Map a Meadow DataType to an MSSQL native type.
-	 *
-	 * @param {string} pDataType - The Meadow DataType
-	 * @param {string} pSize - The column size specification
-	 *
-	 * @return {string} The MSSQL type string
+	 * Map a Meadow DataType to an MSSQL native type. See
+	 * `_mapDataTypeToNative` for the nullability rules.
 	 */
-	_mapDataTypeMSSQL(pDataType, pSize)
+	_mapDataTypeMSSQL(pDataType, pSize, pNullable)
 	{
+		let tmpNotNull = (pNullable === false) ? ' NOT NULL' : '';
 		switch (pDataType)
 		{
 			case 'ID':
@@ -215,34 +217,31 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 				// default in meadow-connection-mssql.
 				return 'NCHAR(' + (pSize || '255') + ') NOT NULL';
 			case 'ForeignKey':
-				return 'INT NOT NULL DEFAULT 0';
+				return 'INT' + tmpNotNull;
 			case 'Numeric':
-				return 'INT NOT NULL DEFAULT 0';
+				return 'INT' + tmpNotNull;
 			case 'Decimal':
-				return 'DECIMAL(' + (pSize || '10,2') + ')';
+				return 'DECIMAL(' + (pSize || '10,2') + ')' + tmpNotNull;
 			case 'String':
-				return 'NVARCHAR(' + (pSize || '64') + ') NOT NULL DEFAULT \'\'';
+				return 'NVARCHAR(' + (pSize || '64') + ')' + tmpNotNull;
 			case 'Text':
-				return 'NVARCHAR(MAX)';
+				return 'NVARCHAR(MAX)' + tmpNotNull;
 			case 'DateTime':
-				return 'DATETIME2';
+				return 'DATETIME2' + tmpNotNull;
 			case 'Boolean':
-				return 'BIT NOT NULL DEFAULT 0';
+				return 'BIT' + tmpNotNull;
 			default:
-				return 'NVARCHAR(MAX)';
+				return 'NVARCHAR(MAX)' + tmpNotNull;
 		}
 	}
 
 	/**
-	 * Map a Meadow DataType to a SQLite native type.
-	 *
-	 * @param {string} pDataType - The Meadow DataType
-	 * @param {string} pSize - The column size specification
-	 *
-	 * @return {string} The SQLite type string
+	 * Map a Meadow DataType to a SQLite native type. See
+	 * `_mapDataTypeToNative` for the nullability rules.
 	 */
-	_mapDataTypeSQLite(pDataType, pSize)
+	_mapDataTypeSQLite(pDataType, pSize, pNullable)
 	{
+		let tmpNotNull = (pNullable === false) ? ' NOT NULL' : '';
 		switch (pDataType)
 		{
 			case 'ID':
@@ -250,21 +249,21 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 			case 'GUID':
 				return 'TEXT NOT NULL';
 			case 'ForeignKey':
-				return 'INTEGER NOT NULL DEFAULT 0';
+				return 'INTEGER' + tmpNotNull;
 			case 'Numeric':
-				return 'INTEGER NOT NULL DEFAULT 0';
+				return 'INTEGER' + tmpNotNull;
 			case 'Decimal':
-				return 'REAL';
+				return 'REAL' + tmpNotNull;
 			case 'String':
-				return 'TEXT NOT NULL DEFAULT \'\'';
+				return 'TEXT' + tmpNotNull;
 			case 'Text':
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 			case 'DateTime':
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 			case 'Boolean':
-				return 'INTEGER NOT NULL DEFAULT 0';
+				return 'INTEGER' + tmpNotNull;
 			default:
-				return 'TEXT';
+				return 'TEXT' + tmpNotNull;
 		}
 	}
 
@@ -301,7 +300,7 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 			for (let j = 0; j < tmpColumns.length; j++)
 			{
 				let tmpColName = this._quoteIdentifier(tmpColumns[j].Column, pDatabaseType);
-				let tmpColType = this._mapDataTypeToNative(tmpColumns[j].DataType, tmpColumns[j].Size, pDatabaseType);
+				let tmpColType = this._mapDataTypeToNative(tmpColumns[j].DataType, tmpColumns[j].Size, pDatabaseType, tmpColumns[j].Nullable);
 				tmpColumnDefs.push('    ' + tmpColName + ' ' + tmpColType);
 			}
 
@@ -324,7 +323,7 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 			for (let j = 0; j < tmpColumnsAdded.length; j++)
 			{
 				let tmpColName = this._quoteIdentifier(tmpColumnsAdded[j].Column, pDatabaseType);
-				let tmpColType = this._mapDataTypeToNative(tmpColumnsAdded[j].DataType, tmpColumnsAdded[j].Size, pDatabaseType);
+				let tmpColType = this._mapDataTypeToNative(tmpColumnsAdded[j].DataType, tmpColumnsAdded[j].Size, pDatabaseType, tmpColumnsAdded[j].Nullable);
 				// MSSQL uses ADD without COLUMN keyword; other engines use ADD COLUMN
 				let tmpAddKeyword = (pDatabaseType === 'MSSQL') ? 'ADD' : 'ADD COLUMN';
 				tmpStatements.push('ALTER TABLE ' + tmpTableName + ' ' + tmpAddKeyword + ' ' + tmpColName + ' ' + tmpColType);
@@ -361,7 +360,11 @@ class MigrationManagerServiceMigrationGenerator extends libFableServiceBase
 				// We need at least a DataType to generate valid ALTER syntax
 				if (tmpDataType)
 				{
-					let tmpNativeType = this._mapDataTypeToNative(tmpDataType, tmpSize, pDatabaseType);
+					// Nullable change passes through the diff with Changes.Nullable.To.
+					// Fall back to the column's current value if the diff didn't
+					// flag a Nullable change.
+					let tmpNullable = (tmpColMod.Changes && tmpColMod.Changes.Nullable) ? tmpColMod.Changes.Nullable.To : tmpColMod.Nullable;
+					let tmpNativeType = this._mapDataTypeToNative(tmpDataType, tmpSize, pDatabaseType, tmpNullable);
 
 					switch (pDatabaseType)
 					{

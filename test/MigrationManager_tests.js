@@ -1005,10 +1005,14 @@ suite
 						let tmpStatements = tmpMigGen.generateMigrationStatements(tmpDiff, 'MSSQL');
 						libAssert.strictEqual(tmpStatements.length, 2);
 
-						// BuyUSA: type change — simple ALTER COLUMN without DEFAULT
+						// BuyUSA: type change — simple ALTER COLUMN. Nullable is undefined
+						// on the diff entry, so the engine emits plain `BIT` (nullable
+						// by default — `Nullable: false` is the explicit opt-in for
+						// NOT NULL).
 						libAssert.ok(tmpStatements[0].indexOf('ALTER COLUMN') >= 0, 'Should use ALTER COLUMN');
 						libAssert.ok(tmpStatements[0].indexOf('[BuyUSA]') >= 0, 'Should reference BuyUSA');
-						libAssert.ok(tmpStatements[0].indexOf('BIT NOT NULL') >= 0, 'Boolean should map to BIT NOT NULL');
+						libAssert.ok(tmpStatements[0].indexOf('BIT') >= 0, 'Boolean should map to BIT');
+						libAssert.ok(tmpStatements[0].indexOf('NOT NULL') < 0, 'Default Nullable → no NOT NULL');
 						libAssert.ok(tmpStatements[0].indexOf('DEFAULT') < 0, 'MSSQL ALTER COLUMN must not contain DEFAULT');
 
 						// ExternalSyncGUID: size-only change — simple ALTER COLUMN without DEFAULT
@@ -1021,7 +1025,7 @@ suite
 
 				test
 				(
-					'Should generate ALTER COLUMN with DEFAULT for non-MSSQL engines',
+					'Should generate ALTER COLUMN for non-MSSQL engines (nullable by default)',
 					function ()
 					{
 						let tmpManager = new libMeadowMigrationManager({});
@@ -1050,7 +1054,11 @@ suite
 
 						let tmpMySQL = tmpMigGen.generateMigrationStatements(tmpDiff, 'MySQL');
 						libAssert.ok(tmpMySQL[0].indexOf('MODIFY COLUMN') >= 0, 'MySQL should use MODIFY COLUMN');
-						libAssert.ok(tmpMySQL[0].indexOf('DEFAULT') >= 0, 'MySQL ALTER should include DEFAULT');
+						libAssert.ok(tmpMySQL[0].indexOf('TINYINT') >= 0, 'MySQL Boolean should map to TINYINT');
+						// Nullable-by-default convention: no NOT NULL / DEFAULT when the
+						// diff entry doesn't explicitly say Nullable: false.
+						libAssert.ok(tmpMySQL[0].indexOf('NOT NULL') < 0, 'Default Nullable → no NOT NULL');
+						libAssert.ok(tmpMySQL[0].indexOf('DEFAULT') < 0, 'Default Nullable → no DEFAULT');
 
 						let tmpPostgreSQL = tmpMigGen.generateMigrationStatements(tmpDiff, 'PostgreSQL');
 						libAssert.ok(tmpPostgreSQL[0].indexOf('ALTER COLUMN') >= 0, 'PostgreSQL should use ALTER COLUMN');
