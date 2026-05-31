@@ -1,16 +1,22 @@
 # API Reference
 
-Complete API reference for the 10 services in `meadow-migrationmanager`.
+Complete API reference for the services in `meadow-migrationmanager`.
 
 All services extend `fable.ServiceProviderBase` and are registered as service types
 on the main `MeadowMigrationManager` instance. Instantiate them with
 `pManager.instantiateServiceProvider('ServiceType')`.
 
+The main class registers eleven service types: `SchemaLibrary`, `ConnectionLibrary`,
+`StrictureAdapter`, `MeadowPackageGenerator`, `SchemaDiff`, `MigrationGenerator`,
+`SchemaIntrospector`, `SchemaDeployer`, `SchemaVisualizer`, `FlowDataBuilder`, and
+`DatabaseProviderFactory`. The CLI program registers the same set (it instantiates
+`DatabaseProviderFactory` for its live-database commands).
+
 ---
 
 ## MeadowMigrationManager
 
-The root class. Extends `Pict` (which extends `Fable`), registers all 10 service
+The root class. Extends `Pict` (which extends `Fable`), registers all service
 types on construction, and initializes shared application state.
 
 ### Constructor
@@ -57,6 +63,7 @@ On construction, `this.AppData.MigrationManager` is initialized to:
 | `SchemaDeployer` | Creates tables/indices on live databases |
 | `SchemaVisualizer` | Produces text-based schema visualizations |
 | `FlowDataBuilder` | Builds pict-section-flow graph data from schemas |
+| `DatabaseProviderFactory` | Creates connected `meadow-connection-*` providers and runs test/introspect |
 
 ### Usage Example
 
@@ -434,6 +441,43 @@ tmpAdapter.compileAndGenerate('!Book\n@IDBook\n$Title 200\n',
 		// pMeadowPackages -- array of Meadow package objects
 	});
 ```
+
+#### `compileDDLFile(pFilePath, fCallback)`
+
+Compile a MicroDDL file directly from its path on disk. Unlike `compileDDL` (which
+writes text to a temp file), this compiles the original file in place so that
+`[Include ...]` directives resolve relative to the source directory. Only the
+output is written to a temporary directory.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `pFilePath` | `string` | Absolute path to the `.mddl` / `.ddl` file |
+| `fCallback` | `function` | Callback: `(pError, pCompiledSchema)` |
+
+#### `compileFileAndGenerate(pFilePath, fCallback)`
+
+Compile a DDL file (via `compileDDLFile`, so includes resolve) and generate Meadow
+packages in one operation. This is the path the [web server](web-server.md) uses
+for every schema.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `pFilePath` | `string` | Absolute path to the `.mddl` / `.ddl` file |
+| `fCallback` | `function` | Callback: `(pError, pCompiledSchema, pMeadowPackages)` |
+
+### Named index parsing
+
+Both compile paths additionally parse `+`-prefixed named-index lines out of the
+MicroDDL source text and attach them to each table's `Indices` array (Stricture's
+grammar currently treats these lines as comments, so the adapter handles them).
+`+!Name Col, Col` declares a unique index; `+Name Col, Col` declares a non-unique
+index; column order is preserved for composite indexes. The parsed indices are
+also carried into the generated Meadow packages. See
+[Migration Authoring](migration-authoring.md).
 
 ---
 
@@ -1100,6 +1144,10 @@ Generate a single Meadow package object from a table DDL schema.
 
 **Returns:** `Object` -- a Meadow package definition.
 
+> The full `DatabaseProviderFactory` service -- which the live-database CLI commands
+> and the web API use to create connected providers and run test/introspect -- is
+> documented in its own section below.
+
 ##### Meadow Package Shape
 
 ```js
@@ -1150,3 +1198,103 @@ Any unrecognized DataType defaults to `String` with a default value of `''`.
 | `DeleteDate` | `DeleteDate` |
 | `DeletingIDUser` | `DeleteIDUser` |
 | `Deleted` | `Deleted` |
+
+---
+
+## DatabaseProviderFactory
+
+Bridges generic `ConnectionLibrary` configurations and the `meadow-connection-*`
+provider modules. It creates connected database providers from a type and config,
+and offers convenience methods for testing and introspecting connections. All three
+interfaces (CLI, Terminal UI, Web) use this service to talk to live databases.
+
+**Service type:** `'DatabaseProviderFactory'`
+**Extends:** `fable.ServiceProviderBase`
+
+On construction it attempts to `require` each of the four connector modules
+(`meadow-connection-mysql`, `meadow-connection-postgresql`, `meadow-connection-mssql`,
+`meadow-connection-sqlite`). Each is optional -- a module that is not installed is
+simply absent from the available-providers list. All four are declared as
+dependencies of this package, so by default every type is available.
+
+### Config Mapping
+
+A generic connection config -- `{ server, port, user, password, database }` -- is
+mapped to each provider's expected shape. SQLite uses the `database` value as the
+file path (defaulting to `:memory:`); the other engines map `server`/`host`,
+`port`, `user`, `password`, and `database` into their nested option blocks with
+per-engine port defaults (MySQL 3306, PostgreSQL 5432, MSSQL 1433).
+
+### Methods
+
+#### `listAvailableProviders()`
+
+**Returns:** `Array<string>` -- the provider type names that are installed (e.g.
+`['MySQL', 'PostgreSQL', 'MSSQL', 'SQLite']`).
+
+#### `isProviderAvailable(pType)`
+
+**Returns:** `boolean` -- whether the given provider type is installed.
+
+#### `createProvider(pType, pConfig, fCallback)`
+
+Instantiate the appropriate connector, map the config, connect, and return the
+ready-to-use provider.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `pType` | `string` | `'MySQL'`, `'PostgreSQL'`, `'MSSQL'`, or `'SQLite'` |
+| `pConfig` | `Object` | Generic connection config |
+| `fCallback` | `function` | Callback: `(pError, pProvider)` |
+
+Returns an error when the provider type is not available, listing the installed
+types.
+
+#### `createProviderFromConnection(pConnectionName, fCallback)`
+
+Look up a named connection in `ConnectionLibrary` and create a connected provider
+from it.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `pConnectionName` | `string` | Name of a connection in the library |
+| `fCallback` | `function` | Callback: `(pError, pProvider, pConnectionEntry)` |
+
+#### `testConnection(pConnectionName, fCallback)`
+
+Connect a named connection and list its tables. Callback: `(pError, pTableList)`
+where `pTableList` is `Array`.
+
+#### `testConnectionConfig(pType, pConfig, fCallback)`
+
+Test a type + config without requiring a saved entry. Callback: `(pError, pTableList)`.
+
+#### `introspectConnection(pConnectionName, fCallback)`
+
+Create a provider for a named connection, introspect the full database schema, store
+the result in `fable.AppData.MigrationManager.IntrospectionResult`, and return it.
+
+**Parameters:**
+
+| Parameter | Type | Description |
+|---|---|---|
+| `pConnectionName` | `string` | Name of a connection in the library |
+| `fCallback` | `function` | Callback: `(pError, pSchema)` where `pSchema` is `{ Tables: [...] }` |
+
+#### `introspectConnectionConfig(pType, pConfig, fCallback)`
+
+Introspect by type + config without a saved entry. Callback: `(pError, pSchema)`.
+
+```js
+let tmpFactory = tmpManager.instantiateServiceProvider('DatabaseProviderFactory');
+
+tmpFactory.introspectConnection('local-mysql',
+	(pError, pSchema) =>
+	{
+		// pSchema.Tables is an array of { TableName, Columns, ... }
+	});
+```

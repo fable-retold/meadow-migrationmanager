@@ -1,6 +1,8 @@
 # CLI Guide
 
-> Complete command reference for the `meadow-migration` command-line interface
+> Guided, example-driven walkthrough of the `meadow-migration` command-line interface
+
+> For an exhaustive, source-verified reference of every command, argument, and flag -- including the `serve` and `explain-config` commands -- see the [CLI Reference](cli-reference.md). This guide is the narrative companion to that page.
 
 ## Installation
 
@@ -300,6 +302,9 @@ meadow-migration generate-script <source-schema> <target-schema> [options]
 |---|---|---|
 | `-t, --type <type>` | Database type (MySQL, PostgreSQL, MSSQL, SQLite) | `MySQL` |
 | `-o, --output <file>` | Output file path (omit to print to stdout) | (none) |
+| `-c, --connection <name>` | Use a live database as the source (current state) instead of a schema | (none) |
+
+When `--connection` is given, the named database is introspected and used as the source, and the single positional argument is treated as the target schema. See the [CLI Reference](cli-reference.md).
 
 **Examples:**
 
@@ -359,13 +364,15 @@ meadow-migration introspect <connection> [options]
 meadow-migration introspect local-mysql -o bookstore-live
 ```
 
-**Note:** This command requires a database provider package to be installed for the connection's database type. The provider package handles the actual database communication for schema discovery.
+The command prints the connection details, the number of tables discovered, and each table with its column count. With `-o`, the discovered schema is saved to the schema library under the given name (as the entry's compiled schema).
+
+**Note:** Schema discovery uses the connector for the connection's database type via the [DatabaseProviderFactory](api-reference.md). The four connectors (MySQL, PostgreSQL, MSSQL, SQLite) ship as dependencies, so all four types work without extra installation.
 
 ---
 
 ### deploy (dep)
 
-Deploys a compiled schema to a live database, creating tables, columns, and indices as needed.
+Intended to deploy a compiled schema to a live database, creating tables, columns, and indices.
 
 **Usage:**
 
@@ -382,24 +389,18 @@ meadow-migration deploy <schema> <connection>
 | `schema` | Schema name from the library |
 | `connection` | Connection name from the library |
 
-**Example:**
-
-```bash
-meadow-migration deploy bookstore local-mysql
-```
-
-**Note:** This command requires a database provider package to be installed for the connection's database type.
+**Note:** This command is **not yet wired up in the CLI.** It validates its arguments, prints the schema and connection it would use, and reports that deploy is not yet available -- it does not contact the database. The underlying [SchemaDeployer](api-reference.md) service is implemented and can be driven programmatically. To create a database from a schema today, generate a migration script with `generate-script` and run it. See the [CLI Reference](cli-reference.md).
 
 ---
 
 ### migrate (m)
 
-Runs a migration on a live database, applying schema changes to bring it in line with the target schema.
+Generates the SQL to bring a live database in line with a target schema. It introspects the database (the current state), diffs it against the target schema (the desired state), and **prints** the resulting migration script to stdout. It does not apply the SQL.
 
 **Usage:**
 
 ```bash
-meadow-migration migrate <schema> <connection>
+meadow-migration migrate <schema> <connection> [-t <type>]
 ```
 
 **Alias:** `m`
@@ -408,8 +409,14 @@ meadow-migration migrate <schema> <connection>
 
 | Argument | Description |
 |---|---|
-| `schema` | Schema name from the library |
-| `connection` | Connection name from the library |
+| `schema` | Target schema name (desired state) |
+| `connection` | Connection name (current state) |
+
+**Options:**
+
+| Option | Description | Default |
+|---|---|---|
+| `-t, --type <type>` | Database dialect override | the connection's type |
 
 **Example:**
 
@@ -417,7 +424,39 @@ meadow-migration migrate <schema> <connection>
 meadow-migration migrate bookstore-v2 local-mysql
 ```
 
-**Note:** This command requires a database provider package to be installed for the connection's database type.
+The command prints a one-line diff summary followed by the migration script. Review the output and apply it through your own deployment process.
+
+---
+
+### serve (s)
+
+Starts the web server for a directory of model files. See [Web Server](web-server.md) for the UI and REST API.
+
+**Usage:**
+
+```bash
+meadow-migration serve [model-path] [-p <port>]
+```
+
+**Alias:** `s`
+
+**Arguments:**
+
+| Argument | Description | Default |
+|---|---|---|
+| `model-path` | Directory of `.mddl` / `.ddl` files | `ModelPath` config, then the current directory |
+
+**Options:**
+
+| Option | Description | Default |
+|---|---|---|
+| `-p, --port <port>` | Port to listen on | random in 7000-7999 |
+
+The command scans the model directory, imports and compiles each schema (resolving `[Include ...]` directives), starts an Orator server, and stays in the foreground until Ctrl+C.
+
+```bash
+meadow-migration serve ./model -p 8080
+```
 
 ---
 
@@ -590,4 +629,4 @@ Schemas (2):
   bookstore-v2  (compiled 2026-03-01T14:23:11.000Z)
 ```
 
-Both schemas are compiled and ready. The generated migration script can be reviewed, edited if needed, and applied to your database through your preferred deployment process -- or directly via the `deploy` and `migrate` commands once a database provider package is installed.
+Both schemas are compiled and ready. The generated migration script can be reviewed, edited if needed, and applied to your database through your preferred deployment process. The `migrate` command will also generate (and print) a script that targets a live database directly; see the [CLI Reference](cli-reference.md) for `migrate` and the current status of `deploy`.

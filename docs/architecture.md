@@ -77,8 +77,10 @@ flowchart LR
 | **Core Data** | SchemaLibrary, ConnectionLibrary | CRUD and persistence for schemas and database connections |
 | **Compilation** | StrictureAdapter, MeadowPackageGenerator | DDL compilation and Meadow ORM package generation |
 | **Diff & Migration** | SchemaDiff, MigrationGenerator | Schema comparison and database-specific SQL generation |
-| **Database Operations** | SchemaIntrospector, SchemaDeployer | Live database discovery and schema deployment |
+| **Database Operations** | SchemaIntrospector, SchemaDeployer, DatabaseProviderFactory | Live database discovery, deployment, and connected `meadow-connection-*` provider creation |
 | **Visualization** | SchemaVisualizer, FlowDataBuilder | ASCII diagrams and interactive pict-section-flow graphs |
+
+`DatabaseProviderFactory` is the bridge between generic connection configs and the four `meadow-connection-*` connector packages; the CLI live-database commands and the web API both go through it. See the [API Reference](api-reference.md).
 
 ## Application State
 
@@ -145,7 +147,9 @@ The TUI uses `pict-application` with `pict-terminalui` and `blessed` for termina
 
 ### Web UI Layer
 
-The web UI uses `pict-view` based views rendering into a sidebar + content layout. The Schema Visualizer and Schema Migrator views integrate `pict-section-flow` for interactive graph visualization with FlowCard node types.
+The `serve` command starts an [Orator](https://fable-retold.github.io/orator/) HTTP server (`MigrationManager-Server-Setup.js`) that scans a model directory, imports and compiles the `.mddl` / `.ddl` files, and exposes a JSON REST API plus a single self-contained HTML page (`source/web/index.html`). The page is a vanilla-JS client that calls the API and loads Pict and `pict-section-flow` from the server to render the interactive schema diagram with FlowCard node types. See the [Web Server](web-server.md) page for the routes and UI.
+
+> The repository also contains a set of `pict-view` classes under `source/views/` (Layout, SchemaLibrary, SchemaVisualizer, SchemaMigrator, and so on). These are an alternate, embeddable view layer; the shipped `serve` command renders the static HTML client described above rather than these view classes.
 
 ## FlowCard Types
 

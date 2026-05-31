@@ -1,5 +1,5 @@
 {
-	"Generated": "2026-05-26T21:12:34.296Z",
+	"Generated": "2026-05-31T01:44:07.142Z",
 	"Mode": "module",
 	"GitHubOrg": "fable-retold",
 	"DefaultBranch": "master",
@@ -19,6 +19,10 @@
 						"Path": "README.md"
 					},
 					{
+						"Title": "Quick Start",
+						"Path": "quickstart.md"
+					},
+					{
 						"Title": "Architecture",
 						"Path": "architecture.md"
 					}
@@ -30,6 +34,10 @@
 					{
 						"Title": "CLI Guide",
 						"Path": "cli-guide.md"
+					},
+					{
+						"Title": "Migration Authoring",
+						"Path": "migration-authoring.md"
 					},
 					{
 						"Title": "User Guide",
@@ -45,25 +53,41 @@
 				"Title": "Reference",
 				"Children": [
 					{
+						"Title": "CLI Reference",
+						"Path": "cli-reference.md"
+					},
+					{
 						"Title": "API Reference",
 						"Path": "api-reference.md"
 					}
 				]
 			},
 			{
-				"Title": "Retold Ecosystem",
+				"Title": "Related Modules",
 				"Children": [
 					{
-						"Title": "Stricture",
-						"Path": "https://github.com/fable-retold/stricture"
+						"Title": "meadow",
+						"Path": "https://fable-retold.github.io/meadow/README.md"
 					},
 					{
-						"Title": "Meadow",
-						"Path": "https://github.com/fable-retold/meadow"
+						"Title": "stricture",
+						"Path": "https://fable-retold.github.io/stricture/README.md"
 					},
 					{
-						"Title": "Pict",
-						"Path": "https://github.com/fable-retold/pict"
+						"Title": "meadow-connection-mysql",
+						"Path": "https://fable-retold.github.io/meadow-connection-mysql/README.md"
+					},
+					{
+						"Title": "meadow-connection-mssql",
+						"Path": "https://fable-retold.github.io/meadow-connection-mssql/README.md"
+					},
+					{
+						"Title": "meadow-connection-postgresql",
+						"Path": "https://fable-retold.github.io/meadow-connection-postgresql/README.md"
+					},
+					{
+						"Title": "meadow-connection-sqlite",
+						"Path": "https://fable-retold.github.io/meadow-connection-sqlite/README.md"
 					}
 				]
 			}
@@ -79,7 +103,10 @@
 			"api-reference.md",
 			"architecture.md",
 			"cli-guide.md",
+			"cli-reference.md",
 			"index.html",
+			"migration-authoring.md",
+			"quickstart.md",
 			"retold-catalog.json",
 			"retold-keyword-index.json",
 			"user-guide.md",

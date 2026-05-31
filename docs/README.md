@@ -8,7 +8,7 @@ Meadow Migration Manager is a comprehensive tool for managing database schemas a
 
 The module is built on the Fable/Pict service architecture. It extends Pict directly, which means it inherits full access to Fable's dependency injection, configuration management, logging, and service provider infrastructure. Ten registered service types handle the core logic -- from SchemaLibrary and ConnectionLibrary for managing artifacts, through StrictureAdapter and SchemaDiff for compilation and comparison, to MigrationGenerator, SchemaDeployer, and SchemaIntrospector for database interaction. A FlowDataBuilder service and SchemaVisualizer service produce interactive pict-section-flow diagrams with table nodes, column-level ports, and foreign key connection edges.
 
-Three user interfaces expose this functionality. An 11-command CLI built on pict-service-commandlineutility covers every workflow from the terminal. A blessed-based Terminal UI launched via the `tui` command provides an interactive dashboard with schema overview, connection management, DDL editing, visualization, deployment, and migration panels. A Pict web application with views for each workflow renders the same flow diagrams in the browser.
+Three user interfaces expose this functionality. A CLI built on pict-service-commandlineutility covers every workflow from the terminal. A blessed-based Terminal UI launched via the `tui` command provides an interactive dashboard with schema overview, connection management, DDL editing, visualization, deployment, and migration panels. A browser UI -- started with the `serve` command -- scans a directory of model files, compiles them, and renders interactive flow diagrams over a REST API.
 
 ## Features
 
@@ -23,9 +23,9 @@ Three user interfaces expose this functionality. An 11-command CLI built on pict
 - **Migration Execution** -- apply generated migration scripts to live databases with connection validation
 - **Schema Visualization** -- produce text-based schema summaries and visual representations
 - **Interactive Flow Diagrams** -- pict-section-flow diagrams with table nodes, column-level ports and FK connection edges via FlowDataBuilder
-- **11-Command CLI** -- full-featured command-line interface built on pict-service-commandlineutility with aliases for every command
+- **Full-Featured CLI** -- command-line interface built on pict-service-commandlineutility with aliases for every command (see the [CLI Reference](cli-reference.md))
 - **Blessed Terminal UI** -- interactive dashboard with panels for schema overview, connection management, DDL editing, visualization, deployment, migration, introspection, Meadow config viewing and script viewing
-- **Pict Web Views** -- browser-based views for schema library, connection library, DDL editing, visualization, deployment, migration, introspection, Meadow config and migration script viewing
+- **Browser UI + REST API** -- the `serve` command scans a model directory, compiles schemas, and serves a single-page UI (schema library, DDL editor, visualizer, Meadow config, connections, diff, migration script) over a JSON API
 - **Cascading Configuration** -- automatic config file discovery from defaults, home directory and working directory
 - **Pict/Fable Service Architecture** -- all services registered as proper Fable service types with dependency injection and logging
 
@@ -120,9 +120,12 @@ Produces database-specific DDL statements (ALTER TABLE, CREATE TABLE, DROP TABLE
 | `diff <source> <target>` | `d` | Compare two compiled schemas |
 | `generate-script <source> <target>` | `gs` | Generate migration SQL (`-t` type, `-o` output file) |
 | `introspect <connection>` | `i` | Discover schema from a live database (`-o` save name) |
-| `deploy <schema> <connection>` | `dep` | Deploy a compiled schema to a database |
-| `migrate <schema> <connection>` | `m` | Execute a migration on a database |
+| `deploy <schema> <connection>` | `dep` | Deploy a compiled schema to a database (not yet wired in the CLI) |
+| `migrate <schema> <connection>` | `m` | Generate migration SQL against a live database (`-t` type) |
+| `serve [model-path]` | `s` | Start the web server for a model directory (`-p` port) |
 | `tui` | `ui` | Launch the interactive Terminal UI |
+
+The CLI also adds an `explain-config` command automatically, which prints the resolved configuration cascade. See the [CLI Reference](cli-reference.md) for every command, argument, and flag.
 
 ## Configuration
 
@@ -160,11 +163,14 @@ meadow-migration explain-config
 
 ## Learn More
 
+- [Quick Start](quickstart.md) -- install to a generated migration in minutes
 - [Architecture](architecture.md) -- service architecture, data flow and module design
-- [CLI Guide](cli-guide.md) -- detailed reference for every CLI command with examples
-- [User Guide](user-guide.md) -- workflows and best practices for schema management
-- [Web Server](web-server.md) -- running the Pict web application and flow visualization
-- [API Reference](api-reference.md) -- programmatic API for all ten service types
+- [CLI Guide](cli-guide.md) -- guided, example-driven command walkthrough
+- [CLI Reference](cli-reference.md) -- exhaustive reference for every command and flag
+- [Migration Authoring](migration-authoring.md) -- writing MicroDDL and running a migration
+- [User Guide](user-guide.md) -- workflows for the CLI, Terminal UI and Web UI
+- [Web Server](web-server.md) -- the `serve` command UI and REST API
+- [API Reference](api-reference.md) -- programmatic API for every service type
 
 ## Related Packages
 
