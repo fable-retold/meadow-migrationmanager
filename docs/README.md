@@ -174,14 +174,14 @@ meadow-migration explain-config
 
 ## Related Packages
 
-- [stricture](https://github.com/fable-retold/stricture) -- MicroDDL compiler and schema toolchain
-- [meadow](https://github.com/fable-retold/meadow) -- data access library and ORM
-- [foxhound](https://github.com/fable-retold/foxhound) -- query DSL for SQL generation
-- [fable](https://github.com/fable-retold/fable) -- application services and dependency injection
-- [pict](https://github.com/fable-retold/pict) -- view and application framework
-- [pict-section-flow](https://github.com/fable-retold/pict-section-flow) -- interactive flow diagram visualization
-- [pict-service-commandlineutility](https://github.com/fable-retold/pict-service-commandlineutility) -- CLI framework
-- [pict-terminalui](https://github.com/fable-retold/pict-terminalui) -- terminal UI bridge
+- [stricture](https://fable-retold.github.io/stricture/) -- MicroDDL compiler and schema toolchain
+- [meadow](https://fable-retold.github.io/meadow/) -- data access library and ORM
+- [foxhound](https://fable-retold.github.io/foxhound/) -- query DSL for SQL generation
+- [fable](https://fable-retold.github.io/fable/) -- application services and dependency injection
+- [pict](https://fable-retold.github.io/pict/) -- view and application framework
+- [pict-section-flow](https://fable-retold.github.io/pict-section-flow/) -- interactive flow diagram visualization
+- [pict-service-commandlineutility](https://fable-retold.github.io/pict-service-commandlineutility/) -- CLI framework
+- [pict-terminalui](https://fable-retold.github.io/pict-terminalui/) -- terminal UI bridge
 
 ## License
 
