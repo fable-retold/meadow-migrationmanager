@@ -251,7 +251,7 @@ Introspecting database via connection [local-mysql]...
   Port:     3306
   Database: bookstore
 
-Introspection complete — 5 table(s) discovered.
+Introspection complete - 5 table(s) discovered.
   Book (9 columns)
   Author (2 columns)
   ...

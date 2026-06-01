@@ -1,6 +1,6 @@
 # Meadow Migration Manager
 
-> **[&#9654; Read the Meadow-Migrationmanager Documentation](https://fable-retold.github.io/meadow-migrationmanager/)** &mdash; interactive docs with the full API reference.
+> **[Read the Meadow-Migrationmanager Documentation](https://fable-retold.github.io/meadow-migrationmanager/)** - interactive docs with the full API reference.
 
 > Database schema migration management for the Meadow ecosystem
 

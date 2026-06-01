@@ -120,7 +120,7 @@ The server registers the routes below. When a `RoutePrefix` is configured (used 
 
 | Method | Route | Purpose |
 |---|---|---|
-| `POST` | `/api/schemas/diff` | Diff two sides; each side is `source`/`target` (a schema name) **or** `sourceConnection`/`targetConnection` (a connection to introspect). Supports schema↔schema, schema↔database, and database↔database. |
+| `POST` | `/api/schemas/diff` | Diff two sides; each side is `source`/`target` (a schema name) **or** `sourceConnection`/`targetConnection` (a connection to introspect). Supports schema<->schema, schema<->database, and database<->database. |
 | `POST` | `/api/schemas/generate-migration` | Generate a migration script from a diff: `{ diff, databaseType }` (databaseType defaults to `MySQL`) |
 
 ### Example requests
