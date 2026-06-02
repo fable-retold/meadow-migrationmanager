@@ -8,67 +8,13 @@ The module follows the Fable service provider pattern: each capability is implem
 
 ## Service Architecture
 
-```mermaid
-graph TB
-    subgraph MeadowMigrationManager["MeadowMigrationManager (extends Pict)"]
-        direction TB
-        subgraph core["Core Data"]
-            SL["SchemaLibrary"]
-            CL["ConnectionLibrary"]
-        end
-        subgraph compile["Compilation"]
-            SA["StrictureAdapter"]
-            MPG["MeadowPackageGenerator"]
-        end
-        subgraph diffmig["Diff & Migration"]
-            SD["SchemaDiff"]
-            MG["MigrationGenerator"]
-        end
-        subgraph dbops["Database Operations"]
-            SI["SchemaIntrospector"]
-            SDep["SchemaDeployer"]
-        end
-        subgraph viz["Visualization"]
-            SV["SchemaVisualizer"]
-            FDB["FlowDataBuilder"]
-        end
-    end
-
-    DDL["MicroDDL Files"] --> SL
-    SL --> SA
-    SA --> SD
-    SA --> MPG
-    SA --> SV
-    SA --> FDB
-    SD --> MG
-    SD --> FDB
-    SI --> SD
-    CL --> SI
-    CL --> SDep
-    SDep --> DB[("Database")]
-    SI --> DB
-```
+<!-- bespoke diagram: edit diagrams/service-architecture.mmd or .hints.json, then: npx pict-renderer-graph build modules/meadow/meadow-migrationmanager/docs -->
+![Service Architecture](diagrams/service-architecture.svg)
 
 ## Data Flow Pipeline
 
-```mermaid
-flowchart LR
-    A["DDL Text\n(MicroDDL)"] --> B["compileDDL()"]
-    B --> C["Compiled Schema\n{Tables: {...}}"]
-    C --> D["diffSchemas()"]
-    E["Introspected\nSchema"] --> D
-    D --> F["Diff Result"]
-    F --> G["generateMigrationScript()"]
-    G --> H["SQL Migration\nScript"]
-    C --> I["buildFlowData()"]
-    I --> J["Flow Diagram\n(Nodes + Connections)"]
-    F --> K["buildDiffFlowData()"]
-    K --> L["Color-coded\nFlow Diagram"]
-    C --> M["generateMeadowPackages()"]
-    M --> N["Meadow Package\nJSON"]
-    C --> O["deploySchema()"]
-    O --> P[("Live Database")]
-```
+<!-- bespoke diagram: edit diagrams/data-flow-pipeline.mmd or .hints.json, then: npx pict-renderer-graph build modules/meadow/meadow-migrationmanager/docs -->
+![Data Flow Pipeline](diagrams/data-flow-pipeline.svg)
 
 ## Service Categories
 

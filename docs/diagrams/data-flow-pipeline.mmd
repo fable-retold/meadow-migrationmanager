@@ -1,0 +1,16 @@
+flowchart LR
+    A["DDL Text\n(MicroDDL)"] --> B["compileDDL()"]
+    B --> C["Compiled Schema\n{Tables: {...}}"]
+    C --> D["diffSchemas()"]
+    E["Introspected\nSchema"] --> D
+    D --> F["Diff Result"]
+    F --> G["generateMigrationScript()"]
+    G --> H["SQL Migration\nScript"]
+    C --> I["buildFlowData()"]
+    I --> J["Flow Diagram\n(Nodes + Connections)"]
+    F --> K["buildDiffFlowData()"]
+    K --> L["Color-coded\nFlow Diagram"]
+    C --> M["generateMeadowPackages()"]
+    M --> N["Meadow Package\nJSON"]
+    C --> O["deploySchema()"]
+    O --> P[("Live Database")]

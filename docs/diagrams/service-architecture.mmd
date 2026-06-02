@@ -1,0 +1,38 @@
+graph TB
+    subgraph MeadowMigrationManager["MeadowMigrationManager (extends Pict)"]
+        direction TB
+        subgraph core["Core Data"]
+            SL["SchemaLibrary"]
+            CL["ConnectionLibrary"]
+        end
+        subgraph compile["Compilation"]
+            SA["StrictureAdapter"]
+            MPG["MeadowPackageGenerator"]
+        end
+        subgraph diffmig["Diff & Migration"]
+            SD["SchemaDiff"]
+            MG["MigrationGenerator"]
+        end
+        subgraph dbops["Database Operations"]
+            SI["SchemaIntrospector"]
+            SDep["SchemaDeployer"]
+        end
+        subgraph viz["Visualization"]
+            SV["SchemaVisualizer"]
+            FDB["FlowDataBuilder"]
+        end
+    end
+
+    DDL["MicroDDL Files"] --> SL
+    SL --> SA
+    SA --> SD
+    SA --> MPG
+    SA --> SV
+    SA --> FDB
+    SD --> MG
+    SD --> FDB
+    SI --> SD
+    CL --> SI
+    CL --> SDep
+    SDep --> DB[("Database")]
+    SI --> DB
