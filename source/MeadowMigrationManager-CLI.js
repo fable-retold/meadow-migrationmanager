@@ -9,6 +9,7 @@
  * @author Steven Velozo <steven@velozo.com>
  */
 const libCLIProgram = require('pict-service-commandlineutility');
+const libCreateMigrationManagerAppData = require('./MeadowMigrationManager-AppData.js');
 
 /**
  * Create the CLI program instance with all commands registered.
@@ -58,6 +59,21 @@ const _MeadowMigrationCLI = new libCLIProgram(
 		require('./commands/MigrationManager-Command-TUI.js'),
 		require('./commands/MigrationManager-Command-Serve.js')
 	]);
+
+// Seed the AppData.MigrationManager namespace that the library, diff, and
+// migration services read and write. The MeadowMigrationManager class seeds this
+// in its constructor; the CLI program is a separate Pict host, so without the same
+// seed here every command that touches the schema or connection library (and the
+// diff, migrate, and introspect commands) dereferences an undefined namespace and
+// throws. Guarded so it never clobbers an already-initialized namespace.
+if (!_MeadowMigrationCLI.AppData)
+{
+	_MeadowMigrationCLI.AppData = {};
+}
+if (!_MeadowMigrationCLI.AppData.MigrationManager)
+{
+	_MeadowMigrationCLI.AppData.MigrationManager = libCreateMigrationManagerAppData();
+}
 
 // Register all service types on the CLI program instance
 _MeadowMigrationCLI.addServiceType('SchemaLibrary', require('./services/MigrationManager-Service-SchemaLibrary.js'));
