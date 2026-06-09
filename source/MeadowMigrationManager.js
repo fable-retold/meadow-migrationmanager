@@ -14,6 +14,7 @@
  * @author Steven Velozo <steven@velozo.com>
  */
 const libPict = require('pict');
+const libCreateMigrationManagerAppData = require('./MeadowMigrationManager-AppData.js');
 
 /**
  * The main MeadowMigrationManager class -- registers all service types on construction.
@@ -45,16 +46,7 @@ class MeadowMigrationManager extends libPict
 		}
 		if (!this.AppData.MigrationManager)
 		{
-			this.AppData.MigrationManager =
-			{
-				Schemas: {},
-				Connections: {},
-				ActiveSchemaName: null,
-				ActiveConnectionName: null,
-				DiffResult: null,
-				MigrationScript: null,
-				IntrospectionResult: null
-			};
+			this.AppData.MigrationManager = libCreateMigrationManagerAppData();
 		}
 
 		// -- Register all service types --
